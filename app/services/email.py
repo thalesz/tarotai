@@ -59,7 +59,7 @@ class EmailConfirmationSchema(EmailSchemaBase):
                 <p>Olá,</p>
                 <p>Obrigado por se registrar em nossa plataforma. Para concluir o processo de cadastro, por favor, confirme seu email clicando no botão abaixo:</p>
                 <div style="text-align: center; margin: 20px 0;">
-                <form action="http://localhost:8000/api/v1/confirm-email/receive/{token}" style="display: inline-block;">
+                <form action="https://tarotserver-fhe9fngmfxewepf5.westus-01.azurewebsites.net/api/v1/confirm-email/receive/{token}" style="display: inline-block;">
                     <button type="submit" style="padding: 10px 20px; font-size: 16px; color: #fff; background-color: #4CAF50; border: none; border-radius: 5px; cursor: pointer;">
                     Confirmar Email
                     </button>
