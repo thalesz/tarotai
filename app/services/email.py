@@ -27,9 +27,9 @@ class EmailConfirmationSchema(EmailSchemaBase):
     @staticmethod
     def _send_email(subject: str, body: str, recipient: str) -> EmailSchemaBase:
         msg = MIMEText(body, "html")  # 👈 ESSENCIAL!
-        msg['Subject'] = subject
-        msg['From'] = settings.SMTP_USERNAME
-        msg['To'] = recipient
+        msg["Subject"] = subject
+        msg["From"] = settings.SMTP_USERNAME
+        msg["To"] = recipient
 
         try:
             with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
@@ -45,9 +45,8 @@ class EmailConfirmationSchema(EmailSchemaBase):
             subject=subject,
             body=body,
             recipient=recipient,
-            sender=settings.SMTP_USERNAME
+            sender=settings.SMTP_USERNAME,
         )
-
 
     @staticmethod
     async def send_confirmation_email(email: str, token: str) -> EmailSchemaBase:

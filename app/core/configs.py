@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     POSTGRES_URL: str
@@ -10,8 +11,8 @@ class Settings(BaseSettings):
     CONFIRMATION_TOKEN_EXPIRE_MINUTES: int = 15  # Valor padrão caso não esteja no .env
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # Valor padrão caso não esteja no .env
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # Valor padrão caso não esteja no .env
-    SMTP_SECRET_KEY: str 
-    
+    SMTP_SECRET_KEY: str
+
     SMTP_SERVER: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = "thales.lps.araujo@gmail.com"

@@ -9,6 +9,8 @@ from app.services.token import TokenRefreshSchema
 from app.schemas.user import UserSchemaUpdate
 
 router = APIRouter()
+
+
 @router.post(
     "/",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -79,10 +81,16 @@ async def logout(request: TokenRefreshSchema, db: AsyncSession = Depends(get_ses
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Refresh token é obrigatório.",
         )
-        
-    # Busca o usuário associado ao refresh token no banco de dados
-    user: UserSchemaUpdate = await UserSchemaUpdate.get_user_by_refresh_token(db, refresh_token)
 
-    await UserSchemaUpdate.remove_refresh_token(db,  user.id, refresh_token,)
+    # Busca o usuário associado ao refresh token no banco de dados
+    user: UserSchemaUpdate = await UserSchemaUpdate.get_user_by_refresh_token(
+        db, refresh_token
+    )
+
+    await UserSchemaUpdate.remove_refresh_token(
+        db,
+        user.id,
+        refresh_token,
+    )
 
     return None

@@ -6,11 +6,13 @@ from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
 from app.schemas.user import UserSchemaBase
 from app.schemas.wallet import WalletSchemaBase
+from app.schemas.status import StatusSchema  # Import StatusSchema
 from app.core.configs import settings
 from app.services.email import EmailConfirmationSchema
 from app.services.token import TokenConfirmationSchema
 
 router = APIRouter()
+
 
 @router.get(
     "/receive/{token}",
@@ -39,14 +41,18 @@ async def receive_confirmation_token_by_email(
             </body>
             </html>
             """,
-            status_code=e.status_code
+            status_code=e.status_code,
         )
 
     try:
-        user_email = token_info.get("sub") if isinstance(token_info, dict) else token_info.sub
-        user_id = token_info.get("id") if isinstance(token_info, dict) else token_info.id
+        user_email = (
+            token_info.get("sub") if isinstance(token_info, dict) else token_info.sub
+        )
+        user_id = (
+            token_info.get("id") if isinstance(token_info, dict) else token_info.id
+        )
         user_exists = await UserSchemaBase.user_exists(db=db, id=user_id)
-        #se n existir lance exceção
+        # se n existir lance exceção
         if not user_exists:
             return HTMLResponse(
                 content="""
@@ -58,12 +64,14 @@ async def receive_confirmation_token_by_email(
                 </body>
                 </html>
                 """,
-                status_code=404
+                status_code=404,
             )
-        
-        
+
         status_atual = await UserSchemaBase.get_status_by_id(id=user_id, db=db)
-        if status_atual != "pending_confirmation":
+        pending_confirmation_status = await StatusSchema.get_id_by_name(
+            db=db, name="pending_confirmation"
+        )
+        if status_atual != pending_confirmation_status:
             return HTMLResponse(
                 content="""
                 <html>
@@ -74,10 +82,16 @@ async def receive_confirmation_token_by_email(
                 </body>
                 </html>
                 """,
-                status_code=404
+                status_code=404,
             )
-        confirmation_status = await UserSchemaBase.confirm_user_using_id(id=user_id, db=db)
-        wallet_confirmation_status = await WalletSchemaBase.confirm_wallet_status_using_id(user_id=user_id, session=db)
+        confirmation_status = await UserSchemaBase.confirm_user_using_id(
+            id=user_id, db=db
+        )
+        wallet_confirmation_status = (
+            await WalletSchemaBase.confirm_wallet_status_using_id(
+                user_id=user_id, session=db
+            )
+        )
 
         if not confirmation_status or not wallet_confirmation_status:
             return HTMLResponse(
@@ -90,7 +104,7 @@ async def receive_confirmation_token_by_email(
                 </body>
                 </html>
                 """,
-                status_code=404
+                status_code=404,
             )
 
         await EmailConfirmationSchema.send_active_email(email=user_email)
@@ -130,7 +144,7 @@ async def receive_confirmation_token_by_email(
             </body>
             </html>
             """,
-            status_code=200
+            status_code=200,
         )
     except AttributeError as e:
         return HTMLResponse(
@@ -143,5 +157,5 @@ async def receive_confirmation_token_by_email(
             </body>
             </html>
             """,
-            status_code=400
+            status_code=400,
         )

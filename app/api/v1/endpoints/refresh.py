@@ -11,6 +11,7 @@ from app.core.configs import settings  # Import the settings object
 
 router = APIRouter()
 
+
 @router.post(
     "/",
     response_model=TokenAccessSchema,
@@ -40,17 +41,13 @@ router = APIRouter()
         401: {
             "description": "Token inválido ou não autorizado.",
             "content": {
-                "application/json": {
-                    "example": {"detail": "Refresh token inválido"}
-                }
+                "application/json": {"example": {"detail": "Refresh token inválido"}}
             },
         },
         403: {
             "description": "Token expirado.",
             "content": {
-                "application/json": {
-                    "example": {"detail": "Refresh token expirado"}
-                }
+                "application/json": {"example": {"detail": "Refresh token expirado"}}
             },
         },
         404: {
@@ -62,22 +59,21 @@ router = APIRouter()
         422: {
             "description": "Erro de validação nos dados enviados.",
             "content": {
-                "application/json": {"example": {
-                    "detail": [
-                        {
-                            "type": "missing",
-                            "loc": [
-                                "body",
-                                "refresh_token"
-                            ],
-                            "msg": "Field required",
-                            "input": {}
-                        }
-                    ]
-                }}
+                "application/json": {
+                    "example": {
+                        "detail": [
+                            {
+                                "type": "missing",
+                                "loc": ["body", "refresh_token"],
+                                "msg": "Field required",
+                                "input": {},
+                            }
+                        ]
+                    }
+                }
             },
         },
-    }
+    },
 )
 async def refresh_access_token(
     request: TokenRefreshSchema, db: AsyncSession = Depends(get_session)
@@ -100,10 +96,14 @@ async def refresh_access_token(
     # Decodifica o refresh token
     payload = {}
     try:
-        payload = TokenRefreshSchema.decode_token(refresh_token, settings.REFRESH_SECRET_KEY, settings.ALGORITHM)
+        payload = TokenRefreshSchema.decode_token(
+            refresh_token, settings.REFRESH_SECRET_KEY, settings.ALGORITHM
+        )
     except HTTPException as e:
         if e.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]:
-            await UserSchemaBase.remove_refresh_token(db, refresh_token, payload.get("id"))
+            await UserSchemaBase.remove_refresh_token(
+                db, refresh_token, payload.get("id")
+            )
         raise e
 
     user_id = payload.get("id")

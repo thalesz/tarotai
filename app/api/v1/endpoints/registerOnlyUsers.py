@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_session
-from app.schemas.user import UserSchema, UserSchemaRegister
+from app.schemas.user import UserSchema, UserSchemaRegister, UserSchemaRegisterClient
 
 router = APIRouter()
 
 
 @router.post(
-    "/",
-    summary="Registrar um novo usuário",
+    "/client",
+    summary="Registrar um novo usuário (cliente)",
     responses={
         201: {
             "description": "Usuário criado com sucesso.",
@@ -17,7 +17,6 @@ router = APIRouter()
                     "example": {
                         "username": "johndoe",
                         "email": "johndoe@example.com",
-                        "user_type": 1,
                         "wallet_id": 123,
                         "status": "pending_confirmation",
                     }
@@ -70,18 +69,23 @@ router = APIRouter()
     },
 )
 async def register_user(
-    user_data: UserSchemaRegister,  # Corpo da requisição exibido nos parâmetros
+    user_data: UserSchemaRegisterClient,  # Corpo da requisição exibido nos parâmetros
     db: AsyncSession = Depends(get_session),
 ):
     """
-    Registrar um novo usuário.
+    Registrar um novo usuário (cliente).
 
     Parameters:
     - **username**: Nome de usuário único (3 a 50 caracteres).
     - **email**: Email de usuário único.
     - **password**: Senha de usuário (mínimo de 8 caracteres).
-    - **user_type**: Tipo de usuário (1 = STANDART).
     - **full_name**: Nome completo do usuário (3 a 100 caracteres).
     """
-    response = await UserSchemaRegister.create_user(db=db, user_data=user_data)
-    return response
+    try:
+        # Adiciona o user_type diretamente ao criar o user_data_with_type
+        user_data_with_type = UserSchemaRegister(**user_data.model_dump(), user_type=1)
+        response = await UserSchemaRegister.create_user(db=db, user_data=user_data_with_type)
+        return response
+    except Exception as e:
+        # Retorna a mesma exceção que ocorreu
+        raise e

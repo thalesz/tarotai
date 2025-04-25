@@ -12,32 +12,31 @@ from jose import jwt, JWTError
 from app.core.configs import settings
 
 
-
 class TokenSchemaBase(BaseModel):
     class Config:
         orm_mode = True
         arbitrary_types_allowed = True
         validate_assignment = True
-    
-    
-    
 
     @classmethod
-    def create_token(cls, data: dict, secret_key: str, expires_delta: timedelta = None) -> str:
+    def create_token(
+        cls, data: dict, secret_key: str, expires_delta: timedelta = None
+    ) -> str:
         try:
             to_encode = data.copy()
             expire = datetime.now() + expires_delta
             to_encode.update({"exp": expire})
-            encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=settings.ALGORITHM)
+            encoded_jwt = jwt.encode(
+                to_encode, secret_key, algorithm=settings.ALGORITHM
+            )
             # print(f"Token created: {encoded_jwt}")
             return encoded_jwt
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Erro ao criar token: {str(e)}"
+                detail=f"Erro ao criar token: {str(e)}",
             )
-    
-    
+
     @staticmethod
     def decode_token(token: str, secret_key: str, algorithm: str) -> dict:
         """
@@ -56,8 +55,7 @@ class TokenSchemaBase(BaseModel):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Token inválido: {str(e)}",
             )
-    
-    
+
     # @staticmethod
     # def create_token(email: EmailStr, token_type: str) -> BaseModel:
     #     if token_type == "access":
@@ -97,18 +95,20 @@ class TokenSchemaBase(BaseModel):
 class TokenConfirmationSchema(TokenSchemaBase):
     sub: str = Field(default=None)
     id: int = Field(default=None)
-    
+
+
 class TokenAccessSchema(TokenSchemaBase):
     access_token: str
     refresh_token: str = Field(default=None)
     token_type: str = Field(default="Bearer")
-    
+
+
 class TokenInfoSchema(TokenSchemaBase):
     sub: str = Field(default=None)
     id: int = Field(default=None)
     email: EmailStr = Field(default=None)
     user_type: int = Field(default=None)
-    status: str = Field(default=None)
+    status: int = Field(default=None)
     full_name: str = Field(default=None)
     birth_date: str = Field(default=None)
     birth_time: str = Field(default=None)
@@ -116,9 +116,11 @@ class TokenInfoSchema(TokenSchemaBase):
 
 class TokenRefreshSchema(TokenSchemaBase):
     refresh_token: str
-    
+
     @classmethod
-    async def update_refresh_token(cls, db: AsyncSession, user_id: str, refresh_token: str) -> None:
+    async def update_refresh_token(
+        cls, db: AsyncSession, user_id: str, refresh_token: str
+    ) -> None:
         try:
             query = select(UserModel).where(UserModel.id == user_id)
             result = await db.execute(query)
@@ -132,5 +134,5 @@ class TokenRefreshSchema(TokenSchemaBase):
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Erro ao atualizar o token de atualização: {str(e)}"
+                detail=f"Erro ao atualizar o token de atualização: {str(e)}",
             )
