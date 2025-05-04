@@ -54,6 +54,6 @@ async def get_all_cards_by_deck_id(
             raise HTTPException(status_code=400, detail="Deck ID is required")
         
         cards = await CardSchemaBase.get_card_by_deck_id(session=db, deck_id=deck_id)
-        return JSONResponse(content={"cards": [{"id": card.id, "name": card.name} for card in cards]})
+        return JSONResponse(content={"cards": [{"id": card.id, "name": card.name, "description": card.description} for card in cards]})
     except HTTPException as e:
         return {"error": e.detail}

@@ -17,6 +17,32 @@ class CardSchemaBase(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = True
         
+        
+    @staticmethod
+    async def check_cards_belong_to_deck(
+        session: AsyncSession, deck_id: int, card_ids: list[int]
+    ) -> bool:
+        """
+        Verifica se todos os cards pertencem ao deck especificado.
+        """
+        result = await session.execute(
+            select(CardModel).where(
+                CardModel.deck_id == deck_id, CardModel.id.in_(card_ids)
+            )
+        )
+        cards = result.scalars().all()
+        return len(cards) == len(card_ids)
+    
+    @staticmethod
+    async def get_cards_names_by_group_ids(session: AsyncSession, group_ids: list[int]) -> list:
+        """
+        Retorna todos os  nomes de cards de uma lista de grupos de ids específicos.
+        """
+        result = await session.execute(
+            select(CardModel.name).where(CardModel.id.in_(group_ids))
+        )
+        return result.scalars().all()
+        
     @staticmethod
     async def get_card_by_deck_id(session: AsyncSession, deck_id: int) -> list:
         """

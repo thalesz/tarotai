@@ -13,11 +13,15 @@ from app.models.deck import DeckModel
 from app.models.status import StatusModel
 from app.models.card import CardModel
 from app.models.user_type import UserTypeModel
+from app.models.spread_types import SpreadTypeModel
+from app.models.draw import DrawModel
 
 from app.schemas.user_type import UserTypeSchemaBase
 from app.schemas.status import StatusSchemaBase
 from app.schemas.card import CardSchemaBase
 from app.schemas.deck import DeckSchemaBase
+from app.schemas.spread_type import SpreadTypeSchema
+from app.schemas.topic import TopicSchemaBase
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,5 +39,7 @@ async def lifespan(app: FastAPI):
         await StatusSchemaBase.sync_statuses(db)
         await DeckSchemaBase.sync_decks(db)
         await CardSchemaBase.sync_cards(db)
+        await SpreadTypeSchema.sync_spread_types(db)
+        await TopicSchemaBase.sync_topics(db)
         print("💾 Tabelas adicionadas!")
     yield

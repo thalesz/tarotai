@@ -19,7 +19,7 @@ router = APIRouter()
                         "email": "johndoe@example.com",
                         "user_type": 1,
                         "wallet_id": 123,
-                        "status": "pending_confirmation",
+                        "status": 1,
                     }
                 }
             },

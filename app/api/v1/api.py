@@ -10,7 +10,10 @@ from app.api.v1.endpoints import (
     receiveConfirmationToken,
     registerOnlyUsers,
     getAllDeck,
-    getCardByDeckId
+    getCardByDeckId,
+    getAllSpreadTypes,
+    PostNewDraw, 
+    PutNewDraw
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -69,7 +72,7 @@ api_router.include_router(pending_confirmation_router)
 
 
 
-# enviar email de verificação de conta - precisa estar logado e ter o status de "pending_confirmation"
+# enviar email de verificação de conta - precisa estar logado e ter o status de "pending_active"
 active_router = APIRouter(
     dependencies=[
         Depends(verify_jwt),
@@ -80,11 +83,35 @@ active_router.include_router(
     getAllDeck.router, prefix="/deck", tags=["deck"]
 )
 
+active_router.include_router(
+    getAllSpreadTypes.router, prefix="/spread", tags=["spread"]
+)
+
 
 active_router.include_router(
     getCardByDeckId.router, prefix="/card", tags=["card"]
 )
 
+active_router.include_router(
+    PostNewDraw.router, prefix="/draw", tags=["draw"]
+)
+active_router.include_router(
+    PutNewDraw.router, prefix="/draw", tags=["draw"]
+)
+
 api_router.include_router(active_router)
 
 
+adm_active_router = APIRouter(
+    dependencies=[
+        Depends(verify_jwt),
+        Depends(verify_user_type_factory("ADM")),
+        Depends(verify_status_factory("active")),
+    ]
+)
+adm_active_router.include_router(
+    getAllSpreadTypes.router, prefix="/spread", tags=["spread"]
+)
+
+
+api_router.include_router(adm_active_router)

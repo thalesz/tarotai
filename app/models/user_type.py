@@ -12,6 +12,8 @@ class UserTypeModel(Base, SQLModel, table=True):
     accessible_card_type_ids: Optional[List[int]] = Field(
         sa_column=Column(ARRAY(Integer), nullable=True)
     )
+    # deck_avaliable: list = Field(default=None, sa_column=Column(ARRAY(Integer), nullable=True))
+    token_amount: int = Field(default=0, sa_column=Column(Integer, nullable=False))
 
     class Config:
         arbitrary_types_allowed = True

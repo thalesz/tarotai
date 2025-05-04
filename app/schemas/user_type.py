@@ -1,7 +1,9 @@
 from pydantic import BaseModel, Field
 from sqlmodel import SQLModel
-from sqlalchemy import Column, String, Integer, ARRAY
+from sqlalchemy import Column, String, Integer
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.expression import any_
 from typing import List, Optional
 from app.core.base import Base  # Importando o Base correto
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +18,32 @@ class UserTypeSchemaBase(BaseModel):
         orm_mode = True
         arbitrary_types_allowed = True
         validate_assignment = True
+        
+    @staticmethod
+    async def get_token_amount_by_id(session: AsyncSession, user_type_id: int) -> int:
+        """
+        Retorna a quantidade de tokens disponíveis para o tipo de usuário especificado.
+        """
+        result = await session.execute(
+            select(UserTypeModel.token_amount).where(UserTypeModel.id == user_type_id)
+        )
+        return result.scalar() if result else None
+        
+    @staticmethod
+    async def check_deck_belongs_to_user( 
+        session: AsyncSession, user_id: int, deck_id: int
+    ) -> bool:
+        """
+        Verifica se o deck pertence ao usuário especificado.
+        """
+        result = await session.execute(
+            select(UserTypeModel.id).where(
+                UserTypeModel.id == user_id,
+                deck_id == any_(UserTypeModel.accessible_card_type_ids)
+            )
+        )
+        
+        return result.scalars().first() is not None
     
     
     @staticmethod
@@ -53,7 +81,9 @@ class UserTypeSchemaBase(BaseModel):
                 new_user_type = UserTypeModel(
                     id=user_type["id"],
                     name=user_type["name"],
-                    accessible_card_type_ids=user_type["accessible_card_type_ids"]
+                    accessible_card_type_ids=user_type["accessible_card_type_ids"],
+                    token_amount=user_type["token_amount"]
+                    
                 )
                 session.add(new_user_type)
                 try:
@@ -86,3 +116,7 @@ class UserTypeSchema(UserTypeSchemaBase):
     accessible_card_type_ids: Optional[List[int]] = Field(
         sa_column=Column(ARRAY(Integer), nullable=True)
     )  # IDs dos tipos de cards acessíveis
+    #quantidade de token
+    token_amount: Optional[int] = Field(
+        sa_column=Column(Integer, nullable=True, default=0)
+    )  # Quantidade de tokens disponíveis para o tipo de usuário

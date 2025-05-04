@@ -1,0 +1,22 @@
+topics = [
+    { "id": 1, "name": "Amor", "description": "Relacionamentos românticos, sentimentos e conexões afetivas." },
+    { "id": 2, "name": "Família", "description": "Dinâmica familiar, laços de sangue e convivência com parentes." },
+    { "id": 3, "name": "Trabalho", "description": "Carreira, ambiente profissional e realizações no campo laboral." },
+    { "id": 4, "name": "Finanças", "description": "Dinheiro, estabilidade econômica, investimentos e recursos." },
+    { "id": 5, "name": "Saúde", "description": "Bem-estar físico, emocional e equilíbrio mental." },
+    { "id": 6, "name": "Espiritualidade", "description": "Caminho espiritual, fé, propósito superior e conexão com o divino." },
+    { "id": 7, "name": "Autoconhecimento", "description": "Descoberta pessoal, traços de personalidade e evolução interior." },
+    { "id": 8, "name": "Imagem Pessoal", "description": "Autoestima, aparência, identidade e como o mundo te percebe." },
+    { "id": 9, "name": "Projetos e Sonhos", "description": "Planos de vida, metas futuras e realizações pessoais." },
+    { "id": 10, "name": "Vida Passada", "description": "Influências de outras vidas, karmas e heranças espirituais." },
+    { "id": 11, "name": "Energia Atual", "description": "Leitura do momento presente, vibrações ao redor e foco do agora." },
+    { "id": 12, "name": "Relacionamentos em Geral", "description": "Conexões interpessoais: amizades, colegas, vínculos diversos." },
+    { "id": 13, "name": "Mudanças de Ciclo", "description": "Fins e recomeços, transições importantes e novos começos." },
+    { "id": 14, "name": "Missão de Alma", "description": "Chamado interior, caminho de vida e propósito existencial." },
+    { "id": 15, "name": "Cura Emocional", "description": "Feridas do passado, superações e libertação emocional." },
+    { "id": 16, "name": "Tomada de Decisão", "description": "Dilemas, caminhos possíveis e ajuda para escolher com clareza." },
+    { "id": 17, "name": "Vida Acadêmica", "description": "Estudos, aprendizado, desenvolvimento intelectual e formação." },
+    { "id": 18, "name": "Casa e Lar", "description": "Ambiente doméstico, mudanças de residência, sensação de pertencimento." },
+    { "id": 19, "name": "Sexualidade", "description": "Desejos, expressão sexual, intimidade e conexão com o corpo." },
+    { "id": 20, "name": "Liberdade Pessoal", "description": "Independência, autenticidade e direito de ser quem se é." }
+]

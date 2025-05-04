@@ -22,6 +22,43 @@ class DeckSchemaBase(BaseModel):
             True  # Allows arbitrary types like SQLAlchemy's DateTime
         )
         validate_assignment = True
+        
+        
+    @staticmethod
+    async def get_deck_name_by_id(
+        session: AsyncSession, deck_id: int
+    ) -> str | None:
+        """
+        Retorna o nome do deck pelo ID.
+        """
+        try:
+            result = await session.execute(
+                select(DeckModel.name).where(DeckModel.id == deck_id)
+            )
+            return result.scalar_one_or_none()
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao buscar o nome do deck: {str(e)}"
+            )
+
+    
+    
+    @staticmethod
+    async def deck_exists(session: AsyncSession, deck_id: int) -> bool:
+        """
+        Verifica se o deck existe no banco de dados.
+        """
+        try:
+            result = await session.execute(
+                select(DeckModel).where(DeckModel.id == deck_id)
+            )
+            return result.scalars().first() is not None
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao verificar a existência do deck: {str(e)}"
+            )
     
     @staticmethod
     async def get_all_decks(session: AsyncSession) -> list:

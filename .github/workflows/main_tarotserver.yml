@@ -8,9 +8,42 @@ on:
   push:
     branches:
       - main
+      - dev
+      - test
+  pull_request:
+    branches:
+      - main
+      - dev
+      - test
   workflow_dispatch:
 
 jobs:
+  verify-source-and-target-branches:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify pull request source and target branches
+        run: |
+          TARGET_BRANCH="${{ github.base_ref }}"
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          
+          if [[ "$TARGET_BRANCH" == "main" ]]; then
+            if [[ "$SOURCE_BRANCH" != "test" ]]; then
+              echo "Pull requests to 'main' must come from the 'test' branch." >&2
+              exit 1
+            fi
+          else
+            if [[ "$TARGET_BRANCH" != "test" && "$TARGET_BRANCH" != "$SOURCE_BRANCH" ]]; then
+              echo "Pull requests can only target 'test' or the same branch." >&2
+              exit 1
+            fi
+          fi
+          
+      - name: Log verification success
+        run: |
+          echo "Source branch verified: ${{ github.head_ref }}"
+          echo "Target branch verified: ${{ github.base_ref }}"
+
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -78,4 +111,3 @@ jobs:
         with:
           app-name: 'tarotserver'
           slot-name: 'Production'
-          

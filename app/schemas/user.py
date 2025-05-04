@@ -24,6 +24,41 @@ class UserSchemaBase(BaseModel):
         orm_mode = True
         arbitrary_types_allowed = True
         validate_assignment = True
+        
+    @staticmethod
+    async def get_user_name_by_id(db: AsyncSession, id: int) -> str:
+        """
+        Obtém o nome de usuário pelo ID.
+        """
+        query = select(UserModel.username).where(UserModel.id == id)
+        result = await db.execute(query)
+        user_name = result.scalar_one_or_none()
+
+        if user_name is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado",
+            )
+
+        return user_name
+        
+    @staticmethod
+    async def get_user_type_by_id(db: AsyncSession, id: int) -> int:
+        """
+        Obtém o tipo de usuário pelo ID.
+        """
+        query = select(UserModel.user_type).where(UserModel.id == id)
+        result = await db.execute(query)
+        user_type = result.scalar_one_or_none()
+
+        if user_type is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado",
+            )
+
+        return user_type
+
 
     @staticmethod
     # verificar se o usuario existe
@@ -432,7 +467,7 @@ class UserSchema(UserSchemaBase):
         ...,
         description="Status do usuário obrigatório.",
     )
-
+    
 
 class UserSchemaUpdate(UserSchema):
     refresh_token: str = Field(
