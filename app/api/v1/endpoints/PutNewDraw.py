@@ -22,47 +22,48 @@ from app.services.extract import JsonExtractor  # Import JsonExtractor
 router = APIRouter()
 
 
+
 @router.put(
     "/update",
-    summary="Update an existing draw",
-    description="Updates the cards, context, and other details of an existing tarot draw. "
-                "This endpoint validates the input data, checks for user and deck permissions, "
-                "and performs a tarot reading using AI services.",
-    response_description="Details of the updated draw, including the reading and associated topics.",
+    summary="Atualizar uma tiragem existente",
+    description="Atualiza as cartas, contexto e outros detalhes de uma tiragem de tarot existente. "
+                "Este endpoint valida os dados de entrada, verifica permissões de usuário e baralho, "
+                "e realiza uma leitura de tarot usando serviços de IA.",
+    response_description="Detalhes da tiragem atualizada, incluindo a leitura e os tópicos associados.",
     responses={
         200: {
-            "description": "Successful update of the draw.",
+            "description": "Atualização bem-sucedida da tiragem.",
             "content": {
                 "application/json": {
                     "example": {
                         "leitura": {
-                            "introducao": "This is the introduction to the tarot reading.",
-                            "carta_1": "Interpretation of the first card.",
-                            "carta_2": "Interpretation of the second card.",
-                            "conclusao": "This is the conclusion of the tarot reading."
+                            "introducao": "Esta é a introdução da leitura de tarot.",
+                            "carta_1": "Interpretação da primeira carta.",
+                            "carta_2": "Interpretação da segunda carta.",
+                            "conclusao": "Esta é a conclusão da leitura de tarot."
                         }
                     }
                 }
             },
         },
         400: {
-            "description": "Bad request due to invalid input or missing data.",
+            "description": "Requisição inválida devido a dados de entrada inválidos ou ausentes.",
             "content": {
                 "application/json": {
-                    "example": {"detail": "Invalid input data."}
+                    "example": {"detail": "Dados de entrada inválidos."}
                 }
             },
         },
         401: {
-            "description": "Unauthorized access due to missing or invalid token.",
+            "description": "Acesso não autorizado devido a token ausente ou inválido.",
             "content": {
                 "application/json": {
-                    "example": {"detail": "Token information is missing."}
+                    "example": {"detail": "Informações do token estão ausentes."}
                 }
             },
         },
         404: {
-            "description": "Resource not found, such as a missing draw or deck.",
+            "description": "Recurso não encontrado, como uma tiragem inexistente.",
             "content": {
                 "application/json": {
                     "example": {"detail": "Draw not found."}
@@ -70,7 +71,7 @@ router = APIRouter()
             },
         },
         500: {
-            "description": "Internal server error due to database or other issues.",
+            "description": "Erro interno do servidor devido a problemas no banco de dados ou outros.",
             "content": {
                 "application/json": {
                     "example": {"detail": "An error occurred while updating the draw."}
@@ -79,6 +80,7 @@ router = APIRouter()
         },
     },
 )
+
 
 
 async def update_draw(
@@ -249,7 +251,7 @@ async def update_draw(
         )
         role = (
             "Você é o melhor tarólogo do mundo, com vasto conhecimento em tarot, simbolismo e consegue interpretar cartas de forma precisa tanto para noticias boas quanto ruins."
-            "Seus clientes se sente confortavel, voce consegue ser vuneravel e mesmo com noticias ruins que as vezes tem voce o ajuda "
+            "Seus clientes se sente confortavel, voce consegue ser agradavel mesmo com noticias ruins que as vezes tem voce o ajuda. Vocenão tem medo de dar noticias ruins" 
             "Sua missão é realizar uma tiragem de tarot excepcionalmente detalhada e precisa mesmo que a tiragem seja negativa. "
             "Você deve usar uma linguagem clara e acessível, evitando jargões técnicos. Sem soar robótico ou artificial, "
             "você deve se esforçar para ser o mais humano possível. como um amigo que está ajudando o outro."

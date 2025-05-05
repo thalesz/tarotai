@@ -8,28 +8,28 @@ router = APIRouter()
 
 @router.get(
     "/all",
-    summary="Retrieve all decks",
-    description="Fetches all decks with their respective IDs and names.",
-    response_description="A list of decks with their IDs and names.",
+    summary="Recuperar todos os baralhos",
+    description="Busca todos os baralhos com seus respectivos IDs e nomes.",
+    response_description="Uma lista de baralhos com seus IDs e nomes.",
     responses={
         200: {
-            "description": "Successful response with a list of decks.",
+            "description": "Resposta bem-sucedida com uma lista de baralhos.",
             "content": {
                 "application/json": {
                     "example": {
                         "decks": [
-                            {"id": 1, "name": "Deck 1"},
-                            {"id": 2, "name": "Deck 2"}
+                            {"id": 1, "name": "Baralho 1"},
+                            {"id": 2, "name": "Baralho 2"}
                         ]
                     }
                 }
             },
         },
         500: {
-            "description": "Internal server error.",
+            "description": "Erro interno do servidor.",
             "content": {
                 "application/json": {
-                    "example": {"detail": "An error occurred while fetching decks."}
+                    "example": {"detail": "Ocorreu um erro ao buscar os baralhos."}
                 }
             },
         },

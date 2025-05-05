@@ -7,31 +7,30 @@ from app.schemas.deck import DeckSchemaBase
 from app.schemas.card import CardSchemaBase  # Import CardSchemaBase
 
 router = APIRouter()
-
 @router.get(
     "/{deck_id}",
     response_class=JSONResponse,
-    summary="Retrieve all cards by deck ID",
-    description="Fetches all cards associated with a specific deck ID. The response includes the card ID and name.",
+    summary="Recuperar todas as cartas por ID do baralho",
+    description="Busca todas as cartas associadas a um ID de baralho específico. A resposta inclui o ID e o nome da carta.",
     responses={
         200: {
-            "description": "Successful response with a list of cards.",
+            "description": "Resposta bem-sucedida com uma lista de cartas.",
             "content": {
                 "application/json": {
                     "example": {
                         "cards": [
-                            {"id": 1, "name": "Card 1"},
-                            {"id": 2, "name": "Card 2"}
+                            {"id": 1, "name": "Carta 1", "description": "Descrição da carta 1"},
+                            {"id": 2, "name": "Carta 2", "description": "Descrição da carta 2"}
                         ]
                     }
                 }
             },
         },
         400: {
-            "description": "Bad Request. Deck ID is missing or invalid.",
+            "description": "Requisição inválida. O ID do baralho está ausente ou é inválido.",
             "content": {
                 "application/json": {
-                    "example": {"error": "Deck ID is required"}
+                    "example": {"error": "O ID do baralho é obrigatório"}
                 }
             },
         },

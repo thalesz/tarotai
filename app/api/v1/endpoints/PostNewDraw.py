@@ -11,36 +11,41 @@ from app.services.token import TokenInfoSchema # Import TokenInfoSchema
 router = APIRouter()
 
 @router.post(
-    "/new",
-    summary="Create a new draw",
-    description="Creates a new tarot draw with the provided details.",
-    response_description="Details of the created draw.",
+        "/new",
+    summary="Criar uma nova tiragem de tarô",
+    description="Cria um nova tiragem de tarô com os detalhes fornecidos.",
+    response_description="Detalhes da tiragem criada.",
     responses={
         201: {
-            "description": "Successful creation of a new draw.",
+            "description": "Criação bem-sucedida de uma nova tiragem.",
             "content": {
                 "application/json": {
                     "example": {
-                        "id": 1,
-                        "cards": ["The Fool", "The Magician", "The High Priestess"],
-                        "created_at": "2023-10-01T12:00:00Z"
+                        "message": "Draw created successfully.",
+                        "draw": {
+                            "id": 1,
+                            "user_id": 123,
+                            "spread_type_id": 2,
+                            "status": "completed",
+                            "created_at": "2023-10-01T12:00:00Z"
+                        }
                     }
                 }
             },
         },
         400: {
-            "description": "Bad request due to invalid input.",
+            "description": "Requisição inválida devido a dados de entrada inválidos.",
             "content": {
                 "application/json": {
-                    "example": {"detail": "Invalid input data."}
+                    "example": {"detail": "Dados de entrada inválidos."}
                 }
             },
         },
         500: {
-            "description": "Internal server error.",
+            "description": "Erro interno do servidor.",
             "content": {
                 "application/json": {
-                    "example": {"detail": "An error occurred while creating the draw."}
+                    "example": {"detail": "Ocorreu um erro ao criar o sorteio."}
                 }
             },
         },

@@ -10,27 +10,27 @@ router = APIRouter()
 @router.get(
     "/",
     response_class=JSONResponse,
-    summary="Retrieve all spread types",
-    description="Fetches all spread types available in the system. The response includes the spread type ID and name.",
+    summary="Recuperar todos os tipos de tiragens",
+    description="Busca todos os tipos de spreads disponíveis no sistema. A resposta inclui o ID e o nome do tipo de spread.",
     responses={
         200: {
-            "description": "Successful response with a list of spread types.",
+            "description": "Resposta bem-sucedida com uma lista de tipos de spreads.",
             "content": {
                 "application/json": {
                     "example": {
                         "spread_types": [
-                            {"id": 1, "name": "Spread Type 1"},
-                            {"id": 2, "name": "Spread Type 2"}
+                            {"id": 1, "name": "Tipo de Spread 1"},
+                            {"id": 2, "name": "Tipo de Spread 2"}
                         ]
                     }
                 }
             },
         },
         400: {
-            "description": "Bad Request. An error occurred while fetching spread types.",
+            "description": "Requisição inválida. Ocorreu um erro ao buscar os tipos de spreads.",
             "content": {
                 "application/json": {
-                    "example": {"error": "An error occurred"}
+                    "example": {"error": "Ocorreu um erro"}
                 }
             },
         },
