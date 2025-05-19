@@ -13,7 +13,10 @@ from app.api.v1.endpoints import (
     getCardByDeckId,
     getAllSpreadTypes,
     PostNewDraw, 
-    PutNewDraw
+    PutNewDraw,
+    returnAvaliablesDraws, 
+    postDailyLucky, 
+    putDailyLucky
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -97,6 +100,15 @@ active_router.include_router(
 )
 active_router.include_router(
     PutNewDraw.router, prefix="/draw", tags=["draw"]
+)
+active_router.include_router(
+    returnAvaliablesDraws.router, prefix="/spread", tags=["spread"]
+)
+active_router.include_router(
+    postDailyLucky.router, prefix="/daily-lucky", tags=["daily-lucky"]
+)
+active_router.include_router(
+    putDailyLucky.router, prefix="/daily-lucky", tags=["daily-lucky"]
 )
 
 api_router.include_router(active_router)

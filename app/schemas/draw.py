@@ -48,7 +48,26 @@ class DrawSchemaBase(BaseModel):
                 await session.commit()
             except Exception as e:
                 await session.rollback()
-                raise RuntimeError(f"Failed to update draw: {e}") from e    
+                raise RuntimeError(f"Failed to update draw: {e}") from e   
+            
+        @staticmethod
+        async def get_pending_draw_count_by_user_and_spread_type(
+            session, user_id: int, spread_type_id: int
+        ) -> int:
+                """
+                Get the count of pending draws for a specific user and spread type.
+                """
+                status = await StatusSchemaBase.get_id_by_name(session, "pending_confirmation")
+                query = text(
+                """
+                SELECT COUNT(*) FROM draws
+                WHERE user_id = :user_id AND spread_type_id = :spread_type_id AND status_id = :status_id
+                """
+                )
+                result = await session.execute(query, {"user_id": user_id, "spread_type_id": spread_type_id, "status_id": status})
+                count = result.scalar()
+                return count if count else 0    
+         
         @staticmethod
         async def get_pending_draw_id_by_user_and_spread_type(
             session, user_id: int, spread_type_id: int
