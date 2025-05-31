@@ -121,12 +121,12 @@ async def put_new_daily_lucky(
         user_type_id = await UserSchemaBase.get_user_type_by_id(db, user_id)
         amount_tokens = await UserTypeSchema.get_token_amount_by_id(db, user_type_id)
         max_tokens = int(amount_tokens * 0.3)
-        print(f"Quantidade de tokens: {max_tokens}")
+        # print(f"Quantidade de tokens: {max_tokens}")
         
         # gera a leitura
         reading = await openai_service.gerar_texto(prompt_ajustado=prompt_ajustado, role=role, max_tokens=max_tokens, temperature=0.9)
         
-        print(f"Leitura gerada: {reading}")
+        # print(f"Leitura gerada: {reading}")
         # Remove possíveis delimitadores de código como ```json ou ``` do início e fim
 
         # atualiza no banco

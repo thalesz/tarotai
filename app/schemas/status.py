@@ -40,6 +40,23 @@ class StatusSchemaBase(BaseModel):
                     print(f'Erro ao adicionar ID "{status["id"]}". Conflito de integridade.')
             else:
                 print(f'Status com ID "{status["id"]}" já existe no banco.')
+                
+    @staticmethod
+    async def get_name_by_id(db: AsyncSession, id: int) -> str:
+        """
+        Retrieves the name of a status by its ID.
+        """
+        query = select(StatusModel).where(StatusModel.id == id)
+        result = await db.execute(query)
+        status = result.scalar_one_or_none()
+
+        if not status:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Status with ID {id} not found.",
+            )
+
+        return status.name
         
     @staticmethod
     async def get_id_by_name(db: AsyncSession, name: str) -> int:

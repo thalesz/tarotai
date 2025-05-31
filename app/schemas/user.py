@@ -25,6 +25,26 @@ class UserSchemaBase(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = True
         
+    
+    @staticmethod
+    async def get_all_id_by_status(
+        db: AsyncSession, status_id: int
+    ) -> list[int]:
+        """
+        Obtém todos os IDs de usuários com um determinado status.
+        """
+        query = select(UserModel.id).where(UserModel.status == status_id)
+        result = await db.execute(query)
+        user_ids = result.scalars().all()
+
+        if not user_ids:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Nenhum usuário encontrado com o status fornecido",
+            )
+
+        return user_ids
+        
     @staticmethod
     async def get_user_name_by_id(db: AsyncSession, id: int) -> str:
         """

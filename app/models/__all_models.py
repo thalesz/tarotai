@@ -8,3 +8,5 @@ from app.models.user_type import UserTypeModel  # Importando o UserTypeModel
 from app.models.spread_types import SpreadTypeModel  # Importando o SpreadTypeModel
 from app.models.draw import DrawModel  # Importando o DrawsModel
 from app.models.topic import TopicModel  # Importando o TopicModel
+from app.models.mission_type import MissionTypeModel  # Importando o MissionTypeModel
+from app.models.mission import MissionModel  # Importando o MissionModel

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.api.v1.endpoints import (
+    getAllMissionsByEvents,
     test,
     register,
     auth,
@@ -16,7 +17,10 @@ from app.api.v1.endpoints import (
     PutNewDraw,
     returnAvaliablesDraws, 
     postDailyLucky, 
-    putDailyLucky
+    putDailyLucky,
+    getAllEvents,
+    putMissionStatusById,
+    postNewPrize
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -110,7 +114,18 @@ active_router.include_router(
 active_router.include_router(
     putDailyLucky.router, prefix="/daily-lucky", tags=["daily-lucky"]
 )
-
+active_router.include_router(
+    getAllMissionsByEvents.router, prefix="/mission", tags=["mission"]
+)
+active_router.include_router(
+    getAllEvents.router, prefix="/event", tags=["event"]
+)
+active_router.include_router(
+    putMissionStatusById.router, prefix="/mission", tags=["mission"]
+)
+active_router.include_router(
+    postNewPrize.router, prefix="/event", tags=["event"]
+)
 api_router.include_router(active_router)
 
 
