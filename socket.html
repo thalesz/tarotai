@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Socket Tester</h1>
+    <p id="status">Connecting...</p>
+    <ul id="messages"></ul>
+
+    <script>
+      const userId = 1; // substitua pelo user_id que você está usando no Insomnia/Postman
+      const ws = new WebSocket(`ws://localhost:8000/api/v1/ws/${userId}`);
+
+      ws.onopen = () => {
+        document.getElementById('status').textContent = '✅ Conectado ao WebSocket!';
+      };
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        const li = document.createElement('li');
+        li.textContent = `🔔 Notificação [ID: ${msg.id}]: ${msg.message}`;
+        document.getElementById('messages').appendChild(li);
+      };
+
+      ws.onerror = (err) => {
+        document.getElementById('status').textContent = '❌ Erro na conexão!';
+        console.error(err);
+      };
+    </script>
+  </body>
+</html>

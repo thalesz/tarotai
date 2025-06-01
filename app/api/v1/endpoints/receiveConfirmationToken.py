@@ -7,9 +7,13 @@ from app.dependencies.verifyjwt import verify_jwt
 from app.schemas.user import UserSchemaBase
 from app.schemas.wallet import WalletSchemaBase
 from app.schemas.status import StatusSchema  # Import StatusSchema
+from app.schemas.notification import NotificationSchema  # Import NotificationSchema
 from app.core.configs import settings
 from app.services.email import EmailConfirmationSchema
 from app.services.token import TokenConfirmationSchema
+
+# Import ws_manager from its module (update the import path as needed)
+from app.services.websocket import ws_manager
 
 router = APIRouter()
 
@@ -108,6 +112,13 @@ async def receive_confirmation_token_by_email(
             )
 
         await EmailConfirmationSchema.send_active_email(email=user_email)
+        
+        message = "Conta confirmada com sucesso! Agora você pode acessar todos os recursos da plataforma."
+                # Cria a notificação
+        notification = await NotificationSchema.create_notification(db, user_id, message)
+
+        # Envia via WebSocket
+        await ws_manager.send_notification(str(user_id), message, notification.id)
 
         return HTMLResponse(
             content=f"""

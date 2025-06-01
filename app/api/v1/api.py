@@ -20,7 +20,12 @@ from app.api.v1.endpoints import (
     putDailyLucky,
     getAllEvents,
     putMissionStatusById,
-    postNewPrize
+    postNewPrize,
+    websocket,
+    postNotification,
+    putStatusNotification,
+    getAllNotification,
+    postNotificationForAll
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -56,6 +61,7 @@ api_router.include_router(logout.router, prefix="/logout", tags=["logout"])
 api_router.include_router(
     receiveConfirmationToken.router, prefix="/confirm-email", tags=["confirm-email"]
 )
+api_router.include_router(websocket.router, prefix="/ws", tags=["websocket"])
 
 
 # Tem que ter o jwt para acessar as rotas abaixo
@@ -63,7 +69,6 @@ protected_router = APIRouter(dependencies=[Depends(verify_jwt)])
 protected_router.include_router(testjwt.router, prefix="/test", tags=["test"])
 
 api_router.include_router(protected_router)
-
 # enviar email de verificação de conta - precisa estar logado e ter o status de "pending_confirmation"
 pending_confirmation_router = APIRouter(
     dependencies=[
@@ -126,6 +131,8 @@ active_router.include_router(
 active_router.include_router(
     postNewPrize.router, prefix="/event", tags=["event"]
 )
+
+
 api_router.include_router(active_router)
 
 
@@ -140,5 +147,27 @@ adm_active_router.include_router(
     getAllSpreadTypes.router, prefix="/spread", tags=["spread"]
 )
 
+adm_active_router.include_router(
+    postNotification.router, prefix="/notification", tags=["notification"]
+)
 
+adm_active_router.include_router(
+    postNotificationForAll.router, prefix="/notification", tags=["notification"]
+)
 api_router.include_router(adm_active_router)
+
+active_and_pending_router = APIRouter(
+    dependencies=[
+        Depends(verify_jwt),
+        Depends(verify_status_factory(["pending_confirmation", "active"])),
+    ]
+)
+
+active_and_pending_router.include_router(
+    putStatusNotification.router, prefix="/notification", tags=["notification"]
+)
+
+active_and_pending_router.include_router(
+    getAllNotification.router, prefix="/notification", tags=["notification"]
+)
+api_router.include_router(active_and_pending_router)

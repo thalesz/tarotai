@@ -1,11 +1,8 @@
 from pydantic import BaseModel
 from sqlalchemy import func
-from app.models.spread_types import SpreadTypeModel  # Import the SpreadTypeModel
 from sqlalchemy import select  # Import the select function
 from sqlalchemy.ext.asyncio import AsyncSession  # Import AsyncSession
 from sqlalchemy.exc import IntegrityError  # Import IntegrityError
-from app.basic.mission_type import mission_types  # Import the mission_type data
-from app.models.mission_type import MissionTypeModel  # Import here to avoid circular import
 from app.models.mission import MissionModel  # Import MissionModel to fix NameError
 from app.schemas.status import StatusSchemaBase  # Import StatusSchemaBase to fix NameError
 from datetime import datetime  # Import datetime to fix NameError

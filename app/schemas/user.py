@@ -28,19 +28,22 @@ class UserSchemaBase(BaseModel):
     
     @staticmethod
     async def get_all_id_by_status(
-        db: AsyncSession, status_id: int
+        db: AsyncSession, status_id: int | list[int]
     ) -> list[int]:
         """
-        Obtém todos os IDs de usuários com um determinado status.
+        Obtém todos os IDs de usuários com um ou mais status fornecidos.
         """
-        query = select(UserModel.id).where(UserModel.status == status_id)
+        if isinstance(status_id, list):
+            query = select(UserModel.id).where(UserModel.status.in_(status_id))
+        else:
+            query = select(UserModel.id).where(UserModel.status == status_id)
         result = await db.execute(query)
         user_ids = result.scalars().all()
 
         if not user_ids:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Nenhum usuário encontrado com o status fornecido",
+                detail="Nenhum usuário encontrado com o(s) status fornecido(s)",
             )
 
         return user_ids
