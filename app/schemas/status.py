@@ -59,21 +59,38 @@ class StatusSchemaBase(BaseModel):
         return status.name
         
     @staticmethod
-    async def get_id_by_name(db: AsyncSession, name: str) -> int:
+    async def get_id_by_name(db: AsyncSession, name):
         """
-        Retrieves the ID of a status by its name.
+        Retrieves the ID(s) of a status by its name or list of names.
+        Returns an int if a single name is provided, or a list of ints if a list is provided.
         """
-        query = select(StatusModel).where(StatusModel.name == name)
-        result = await db.execute(query)
-        status = result.scalar_one_or_none()
-
-        if not status:
+        if isinstance(name, str):
+            query = select(StatusModel).where(StatusModel.name == name)
+            result = await db.execute(query)
+            status = result.scalar_one_or_none()
+            if not status:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Status '{name}' not found.",
+                )
+            return status.id
+        elif isinstance(name, list):
+            query = select(StatusModel).where(StatusModel.name.in_(name))
+            result = await db.execute(query)
+            statuses = result.scalars().all()
+            found_names = {s.name for s in statuses}
+            missing = set(name) - found_names
+            if missing:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Status(es) '{', '.join(missing)}' not found.",
+                )
+            return [s.id for s in statuses]
+        else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Status '{name}' not found.",
+                status_code=400,
+                detail="Input must be a string or a list of strings.",
             )
-
-        return status.id
 class StatusSchema(StatusSchemaBase):
     id: Optional[int] = Field(
         sa_column=Column(Integer, primary_key=True, autoincrement=True)

@@ -13,6 +13,28 @@ class TopicSchemaBase(BaseModel):
         )
         validate_assignment = True
     
+    
+    @staticmethod
+    async def get_topic_names_by_id(
+        session: AsyncSession, topic_id: int | list[int]
+    ) -> str | list[str] | None:
+        """
+        Returns the topic name by its ID or a list of topic names by their IDs.
+        """
+        if isinstance(topic_id, list):
+            if not topic_id:
+                return []
+            result = await session.execute(
+                select(TopicModel.name).where(TopicModel.id.in_(topic_id))
+            )
+            return [row[0] for row in result.fetchall()]
+        else:
+            result = await session.execute(
+                select(TopicModel.name).where(TopicModel.id == topic_id)
+            )
+            row = result.first()
+            return row[0] if row else None
+    
     @staticmethod
     async def get_all_topics_ids_by_list_names(
         session: AsyncSession, names: list[str]

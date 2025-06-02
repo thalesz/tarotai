@@ -225,7 +225,7 @@ async def update_draw(
             temperature=0.95
         )
 
-        #print(f"Tópicos correspondentes: {matching_topics}")
+        print(f"Tópicos correspondentes: {matching_topics}")
         
         # return {'matching_topics': matching_topics}
         # Ensure matching_topics is parsed into a Python list
@@ -234,7 +234,8 @@ async def update_draw(
             matching_topics = ast.literal_eval(matching_topics)
         
         list_id_topics = await TopicSchema.get_all_topics_ids_by_list_names(db, matching_topics)
-        #print(f"Lista de ids dos topicos: {list_id_topics}")
+        
+        print(f"Lista de ids dos topicos: {list_id_topics}")
 
         #pega o nome do usuario
         user_name = await UserSchemaBase.get_user_name_by_id(db, user_id) 
@@ -275,7 +276,7 @@ async def update_draw(
         # depois da leitura, atualiza o draw com as cartas e o contexto
         # e o status para (active)
         
-        status_id = await StatusSchema.get_id_by_name(db, "active")
+        status_id = await StatusSchema.get_id_by_name(db, "completed")
         
         draw = await DrawSchemaBase.update_draw_after_standard_reading(
             db, 

@@ -25,7 +25,9 @@ from app.api.v1.endpoints import (
     postNotification,
     putStatusNotification,
     getAllNotification,
-    postNotificationForAll
+    postNotificationForAll,
+    getFiveDrawsByUser,
+    getFiveDailyLuckyByUser,
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -55,7 +57,6 @@ api_router.include_router(register_adm_router)
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(refresh.router, prefix="/refresh", tags=["refresh"])
 api_router.include_router(logout.router, prefix="/logout", tags=["logout"])
-
 # não precisa estar logado por motivos de vai acessar o link com o token de confirmação
 # e o token de confirmação vai ser enviado para o email do usuário
 api_router.include_router(
@@ -98,6 +99,7 @@ active_router.include_router(
 active_router.include_router(
     getAllSpreadTypes.router, prefix="/spread", tags=["spread"]
 )
+active_router.include_router(getFiveDrawsByUser.router, prefix="/draw", tags=["draw"])
 
 
 active_router.include_router(
@@ -130,6 +132,9 @@ active_router.include_router(
 )
 active_router.include_router(
     postNewPrize.router, prefix="/event", tags=["event"]
+)
+active_router.include_router(
+    getFiveDailyLuckyByUser.router, prefix="/daily-lucky", tags=["daily-lucky"]
 )
 
 

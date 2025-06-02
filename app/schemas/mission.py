@@ -66,7 +66,7 @@ class MissionSchemaBase(BaseModel):
         Retorna a data de criação de uma missão pelo ID.
         """
         try:
-            print(f"Buscando data de criação da missão ID {mission_id}.")
+            # print(f"Buscando data de criação da missão ID {mission_id}.")
             result = await session.execute(
                 select(MissionModel.created_at).where(MissionModel.id == mission_id)
             )
@@ -392,7 +392,7 @@ class MissionSchemaBase(BaseModel):
         Retorna o status de uma missão pelo ID.
         """
         try:
-            print(f"Buscando status da missão ID {mission_id}.")
+            # print(f"Buscando status da missão ID {mission_id}.")
             result = await session.execute(
                 select(MissionModel.status).where(MissionModel.id == mission_id)
             )

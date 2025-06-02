@@ -8,7 +8,7 @@ from app.schemas.user import UserSchemaBase
 from app.schemas.spread_type import SpreadTypeSchema
 from app.services.token import TokenInfoSchema
 from app.schemas.daily_lucky import DailyLuckySchemaBase
-from app.schemas.status import StatusSchemaBase
+from app.schemas.status import StatusSchemaBase, StatusSchema
 from app.schemas.user_type import UserTypeSchema
 from app.services.openai import OpenAIService
 from app.services.extract import JsonExtractor  # Import JsonExtractor
@@ -100,7 +100,7 @@ async def put_new_daily_lucky(
         if not daily_lucky_id:
             raise HTTPException(
                 status_code=400, 
-                detail="User already has a pending daily lucky."
+                detail="User não tem sorte diaria pendente."
             )
 
         # prompt para gerar a sorte via IA
@@ -113,7 +113,7 @@ async def put_new_daily_lucky(
             f"É MUITO IMPORTANTE ESTAR NO FORMATO DETERMINADO PORQUE O RESTANTE DA API DEPENDE DISSO.\n"
         )
             
-        prompt_ajustado = "Em uma frase, retorne a sorte aleatória do dia. Pode ser algo positivo, negativo ou curioso, desde que pareça vindo de um biscoito da sorte."
+        prompt_ajustado = "Em uma frase, retorne a sorte aleatória do dia. Pode ser algo positivo, negativo ou curioso, desde que pareça vindo de um biscoito da sorte. seja o mais original possivel"
 
         openai_service = OpenAIService()
 
@@ -128,10 +128,11 @@ async def put_new_daily_lucky(
         
         # print(f"Leitura gerada: {reading}")
         # Remove possíveis delimitadores de código como ```json ou ``` do início e fim
+        status_id = await StatusSchemaBase.get_id_by_name(db, "completed")
 
         # atualiza no banco
         await DailyLuckySchemaBase.update_daily_lucky(
-            session=db, daily_lucky_id=daily_lucky_id, reading=reading
+            session=db, daily_lucky_id=daily_lucky_id, reading=reading, status_id=status_id
         )
         
         reading = JsonExtractor.extract_json_from_reading(reading)

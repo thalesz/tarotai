@@ -31,26 +31,54 @@ class DailyLuckySchemaBase(BaseModel):
     
     @staticmethod
     async def update_daily_lucky(
-        session, daily_lucky_id: int, reading: str
+        session, daily_lucky_id: int, reading: str, status_id: int
     ) -> None:
         """
-        Update the daily lucky entry in the database.
+        Update the daily lucky entry in the database, including reading, used_at, and status_id.
         """
         try:
             query = text(
-                "UPDATE daily_lucky SET reading = :reading, used_at = :used_at WHERE id = :daily_lucky_id"
+                "UPDATE daily_lucky SET reading = :reading, used_at = :used_at, status_id = :status_id WHERE id = :daily_lucky_id"
             )
             await session.execute(
                 query,
                 {
                     "reading": reading,
                     "used_at": datetime.now(),
+                    "status_id": status_id,
                     "daily_lucky_id": daily_lucky_id,
                 },
             )
             await session.commit()
         except Exception as e:
             await session.rollback()
+            raise e
+        
+    @staticmethod
+    async def get_five_daily_lucky_by_user_id(
+        session, user_id: int, status_id: int, count: int = 1, limit: int = 5
+    ) -> list[DailyLuckyModel]:
+        """
+        Get the last five daily lucky entries for a user with pagination.
+        """
+        offset = (count - 1) * limit
+        try:
+            query = text("""
+                SELECT id, user_id, reading, status_id, created_at, used_at
+                FROM daily_lucky
+                WHERE user_id = :user_id AND status_id = :status_id
+                ORDER BY created_at DESC
+                LIMIT :limit OFFSET :offset
+            """)
+            result = await session.execute(query, {
+                "user_id": user_id,
+                "status_id": status_id,
+                "limit": limit,
+                "offset": offset
+            })
+            rows = result.fetchall()
+            return [DailyLuckyModel(**dict(row._mapping)) for row in rows]
+        except Exception as e:
             raise e
         
         

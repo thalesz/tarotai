@@ -16,7 +16,20 @@ class CardSchemaBase(BaseModel):
         orm_mode = True
         arbitrary_types_allowed = True
         validate_assignment = True
-        
+    
+    @staticmethod
+    async def get_card_names_by_ids(
+        session: AsyncSession, card_ids: int | list[int]
+    ) -> list[str]:
+        """
+        Retorna uma lista com os nomes dos cards com base em um ID ou lista de IDs.
+        """
+        if isinstance(card_ids, int):
+            card_ids = [card_ids]
+        result = await session.execute(
+            select(CardModel.name).where(CardModel.id.in_(card_ids))
+        )
+        return result.scalars().all()
         
     @staticmethod
     async def check_cards_belong_to_deck(
