@@ -17,6 +17,8 @@ class StatusSchemaBase(BaseModel):
             True  # Allows arbitrary types like SQLAlchemy's DateTime
         )
         validate_assignment = True
+        
+        
     @staticmethod
     async def sync_statuses(session: AsyncSession):
         for status in statuses:

@@ -21,7 +21,87 @@ class TransactionSchemaBase(BaseModel):
             True  # Allows arbitrary types like SQLAlchemy's DateTime
         )
         validate_assignment = True
-        
+    
+    #funcao que recebe id do usuario e apaga todas as transações de daily exceto ass duas ultimas 
+    @staticmethod
+    async def delete_old_daily_transactions(session: AsyncSession, user_id: int):
+        """
+        Delete all daily transactions for a user except the last two.
+        """
+        try:
+            # Get the last two daily transactions for the user
+            print("Getting last two daily transactions...")
+            print(f"user: {user_id}")
+            stmt = (
+                select(TransactionModel)
+                .where(TransactionModel.user_id == user_id)
+                .where(TransactionModel.transaction_type == TransactionType.DAILY_LOGIN.value)
+                .order_by(TransactionModel.created_at.desc())
+                .limit(2)
+            )
+            result = await session.execute(stmt)
+            last_two_transactions = result.scalars().all()
+
+            # Get all daily transactions for the user
+            stmt = (
+                select(TransactionModel)
+                .where(TransactionModel.user_id == user_id)
+                .where(TransactionModel.transaction_type == TransactionType.DAILY_LOGIN.value)
+            )
+            result = await session.execute(stmt)
+            all_daily_transactions = result.scalars().all()
+
+            # Keep only the last two transactions
+            transactions_to_delete = [tx for tx in all_daily_transactions if tx not in last_two_transactions]
+
+            for tx in transactions_to_delete:
+                await session.delete(tx)
+            await session.commit()
+        except Exception as e:
+            print(f"Error deleting old daily transactions for user {user_id}: {e}")
+
+    @staticmethod
+    async def get_draws_by_transaction_id(
+        session: AsyncSession, transaction_id: int
+    ) -> list[int]:
+        """
+        Get the draws associated with a transaction by its ID.
+        """
+        try:
+            stmt = select(TransactionModel.draws).where(
+                TransactionModel.id == transaction_id
+            )
+            result = await session.execute(stmt)
+            draws = result.scalar_one_or_none()
+            if draws is not None:
+                return draws
+            return []
+        except Exception as e:
+            print(f"Error fetching draws for transaction {transaction_id}: {e}")
+            return []
+    
+    @staticmethod
+    async def get_last_transaction_by_user_id(
+        session: AsyncSession, user_id: int, transaction_type: str = None
+    ) -> int | None:
+        """
+        Get the last transaction ID for a user.
+        """
+        try:
+            stmt = (
+                select(TransactionModel.id)
+                .where(TransactionModel.user_id == user_id)
+            )
+            if transaction_type:
+                stmt = stmt.where(TransactionModel.transaction_type == transaction_type)
+            stmt = stmt.order_by(TransactionModel.created_at.desc()).limit(1)
+            result = await session.execute(stmt)
+            transaction_id = result.scalar_one_or_none()
+            return transaction_id
+        except Exception as e:
+            print(f"Error fetching last transaction for user {user_id}: {e}")
+            return None
+    
     @staticmethod
     async def check_reward_transaction_exists(
         session,

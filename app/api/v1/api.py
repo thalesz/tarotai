@@ -28,6 +28,8 @@ from app.api.v1.endpoints import (
     postNotificationForAll,
     getFiveDrawsByUser,
     getFiveDailyLuckyByUser,
+    putPremiumStatus,
+    getAvaliableReadingStyle
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -137,6 +139,9 @@ active_router.include_router(
     getFiveDailyLuckyByUser.router, prefix="/daily-lucky", tags=["daily-lucky"]
 )
 
+active_router.include_router(
+    getAvaliableReadingStyle.router, prefix="/reading-style", tags=["reading-style"]
+)
 
 api_router.include_router(active_router)
 
@@ -159,6 +164,11 @@ adm_active_router.include_router(
 adm_active_router.include_router(
     postNotificationForAll.router, prefix="/notification", tags=["notification"]
 )
+
+adm_active_router.include_router(
+    putPremiumStatus.router, prefix="/subscription", tags=["premium"]
+)
+       
 api_router.include_router(adm_active_router)
 
 active_and_pending_router = APIRouter(

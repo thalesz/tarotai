@@ -16,6 +16,7 @@ from app.services.token import TokenInfoSchema # Import TokenInfoSchema
 from app.services.openai import OpenAIService  # Import OpenAIService
 from app.schemas.topic import TopicSchema  # Import TopicSchema
 from app.schemas.status import StatusSchema  # Import StatusSchema
+from app.schemas.reading_style import ReadingStyleSchema # Import ReadingStyleSchema
 
 from app.services.extract import JsonExtractor  # Import JsonExtractor
 
@@ -47,10 +48,19 @@ router = APIRouter()
             },
         },
         400: {
-            "description": "Requisição inválida devido a dados de entrada inválidos ou ausentes.",
+            "description": "Requisição inválida devido a dados de entrada inválidos, reading style inválido ou não acessível ao usuário.",
             "content": {
                 "application/json": {
-                    "example": {"detail": "Dados de entrada inválidos."}
+                    "examples": {
+                        "invalid_data": {
+                            "summary": "Dados de entrada inválidos.",
+                            "value": {"detail": "Dados de entrada inválidos."}
+                        },
+                        "invalid_reading_style": {
+                            "summary": "Reading style does not exist or is not accessible to the user.",
+                            "value": {"detail": "Reading style does not exist or is not accessible to the user."}
+                        }
+                    }
                 }
             },
         },
@@ -109,6 +119,10 @@ async def update_draw(
                 status_code=400, 
                 detail="User does not exist."
             )
+        # verifica se o reading style existe
+        #tem que verificar se o cliente tem acesso ao reading style
+        
+            
         # verifica se o tipo de spread existe
         spreadexists = await SpreadTypeSchema.spread_type_exists(db, draw_data.spread_type_id)
         #print("spreadexists: ", spreadexists)
@@ -189,6 +203,31 @@ async def update_draw(
         #pegar o nome das cartas que é uma lista de strings        
         cards_names = await CardSchema.get_cards_names_by_group_ids(db, draw_data.cards)
         
+        reading_style_exists = await UserTypeSchema.check_reading_style_belongs_to_user(
+            db, 
+            user_type_id= user_type_id, 
+            reading_style_id=draw_data.reading_style
+        )
+        
+        if draw_data.reading_style and not reading_style_exists:
+            raise HTTPException(
+                status_code=400, 
+                detail="Reading style does not exist or is not accessible to the user."
+            )
+        
+        reading_style_name = await ReadingStyleSchema.get_reading_style_name_by_id(db, draw_data.reading_style)
+        if not reading_style_name:
+            raise HTTPException(
+                status_code=400, 
+                detail="Reading style name does not exist."
+            )        
+        reading_style_description = await ReadingStyleSchema.get_reading_style_description_by_id(db, draw_data.reading_style)
+        if not reading_style_description:
+            raise HTTPException(
+                status_code=400, 
+                detail="Reading style description does not exist."
+            )
+        
         #retorna uma lista de strings com os nomes das cartas
         #print(f"Nome das cartas: {cards_names}")
         # return {'cards_names' : cards_names}
@@ -245,10 +284,12 @@ async def update_draw(
             f"As cartas fornecidas estão na ordem especificada.\n"
             f"Faça uma tiragem de tarot com as cartas {cards_names}, o contexto '{draw_data.context}', o nome do usuário '{user_name}', "
             f"o tipo de tiragem '{spreadname}', e o nome do deck '{deckname}'.\n"
-            f"Separe a resposta em introdução, tiragem para cada carta, e conclusão, e tem que ser objetivo ou seja no final o consultante tem que saber o que fazer "
-            f" Retorne no formato de um dicionário JSON.\n"
+            f"É OBRIGATÓRIO aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível em toda a interpretação, "
+            f"seguindo rigorosamente a descrição: '{reading_style_description}'.\n"
+            f"Separe a resposta em introdução, tiragem para cada carta, e conclusão, e seja objetivo para que o consultante saiba o que fazer ao final.\n"
+            f"Retorne no formato de um dicionário JSON.\n"
             f"Exemplo de resposta: ```json\n{{'introducao': '...', 'carta_1': '...', 'carta_2': '...', 'conclusao': '...'}}\n```\n"
-            f" É MUITO IMPORTANTE ESTAR NO FORMATO DETERMINADO POR QUE O RESTANTE DA API DEPENDE DISSO.\n"
+            f"É MUITO IMPORTANTE QUE O FORMATO SEJA EXATAMENTE O DETERMINADO, POIS O RESTANTE DA API DEPENDE DISSO.\n"
         )
         role = (
             "Você é o melhor tarólogo do mundo, com vasto conhecimento em tarot, simbolismo e consegue interpretar cartas de forma precisa tanto para noticias boas quanto ruins."

@@ -14,6 +14,46 @@ class DrawSchemaBase(BaseModel):
         validate_assignment = True
     
     @staticmethod
+    async def get_spread_type_id_by_draw_id(
+        session, draw_id: int
+    ) -> int:
+        """
+        Recebe o id do draw e retorna o spread_type_id daquele draw.
+        """
+        query = text("SELECT spread_type_id FROM draws WHERE id = :draw_id")
+        result = await session.execute(query, {"draw_id": draw_id})
+        row = result.fetchone()
+        if row:
+            return row[0]
+        raise ValueError(f"Draw com ID {draw_id} não encontrado.")
+    @staticmethod
+    async def update_created_at(
+        session, draw_id: int
+    ) -> None:
+        """
+        Update the created_at field of a draw entry in the database.
+        """
+        try:
+            query = text("UPDATE draws SET created_at = :created_at WHERE id = :draw_id")
+            await session.execute(query, {"created_at": datetime.now(), "draw_id": draw_id})
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            raise RuntimeError(f"Failed to update created_at for draw {draw_id}: {e}") from e
+    
+    @staticmethod
+    async def get_draw_status_by_id(session, draw_id: int) -> int:
+        """
+        Get the status of a draw by its ID.
+        """
+        query = text("SELECT status_id FROM draws WHERE id = :draw_id")
+        result = await session.execute(query, {"draw_id": draw_id})
+        row = result.fetchone()
+        if row:
+            return row[0]
+        raise ValueError(f"Draw with ID {draw_id} not found.")
+    
+    @staticmethod
     async def get_draws_by_user(
         session,
         user_id: int,
@@ -176,6 +216,7 @@ class DrawUpdate(DrawSchemaBase):
     deck_id: int 
     cards: list[int] 
     context: str 
+    reading_style: int
     
 class DrawSchema(DrawSchemaBase):
     id: int

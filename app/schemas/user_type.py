@@ -20,6 +20,60 @@ class UserTypeSchemaBase(BaseModel):
         validate_assignment = True
         
     @staticmethod
+    async def check_reading_style_belongs_to_user(
+        session: AsyncSession, user_type_id: int, reading_style_id: int
+    ) -> bool:
+        """
+        Verifica se o estilo de leitura pertence ao usuário especificado.
+        """
+        # print(f"Verificando se o estilo de leitura {reading_style_id} pertence ao usuário {user_id}")
+        result = await session.execute(
+            select(UserTypeModel.id).where(
+                UserTypeModel.id == user_type_id,
+                reading_style_id == any_(UserTypeModel.reading_style)
+            )
+        )
+        
+        return result.scalars().first() is not None
+        
+    @staticmethod
+    async def get_reading_styles_by_user_type_id(
+        session: AsyncSession, user_type_id: int
+    ) -> List[int]:
+        """
+        Retorna os IDs dos estilos de leitura disponíveis para o tipo de usuário especificado.
+        """
+        result = await session.execute(
+            select(UserTypeModel.reading_style).where(UserTypeModel.id == user_type_id)
+        )
+        reading_styles = result.scalar_one_or_none()
+        return reading_styles if reading_styles else []
+        
+    @staticmethod
+    async def get_daily_gift_by_user_type(
+        session: AsyncSession, user_type_id: int
+    ) -> List[int]:
+        """
+        Retorna os IDs dos brindes diários disponíveis para o tipo de usuário especificado.
+        """
+        result = await session.execute(
+            select(UserTypeModel.daily_gift).where(UserTypeModel.id == user_type_id)
+        )
+        daily_gifts = result.scalar_one_or_none()
+        return daily_gifts if daily_gifts else []
+        
+        
+    @staticmethod
+    async def get_id_by_name(session: AsyncSession, name: str) -> int:
+        """
+        Retorna o ID do tipo de usuário pelo nome.
+        """
+        result = await session.execute(
+            select(UserTypeModel.id).where(UserTypeModel.name == name)
+        )
+        return result.scalar() if result else None
+        
+    @staticmethod
     async def get_token_amount_by_id(session: AsyncSession, user_type_id: int) -> int:
         """
         Retorna a quantidade de tokens disponíveis para o tipo de usuário especificado.
@@ -82,8 +136,9 @@ class UserTypeSchemaBase(BaseModel):
                     id=user_type["id"],
                     name=user_type["name"],
                     accessible_card_type_ids=user_type["accessible_card_type_ids"],
-                    token_amount=user_type["token_amount"]
-                    
+                    token_amount=user_type["token_amount"],
+                    daily_gift=user_type.get("daily_gift", []),
+                    reading_style=user_type.get("reading_style", [])
                 )
                 session.add(new_user_type)
                 try:
@@ -116,7 +171,14 @@ class UserTypeSchema(UserTypeSchemaBase):
     accessible_card_type_ids: Optional[List[int]] = Field(
         sa_column=Column(ARRAY(Integer), nullable=True)
     )  # IDs dos tipos de cards acessíveis
+    daily_gifts: Optional[List[int]] = Field(
+        sa_column=Column(ARRAY(Integer), nullable=True, default=[])
+    )  # IDs dos brindes diários disponíveis para o tipo de usuário
     #quantidade de token
     token_amount: Optional[int] = Field(
         sa_column=Column(Integer, nullable=True, default=0)
     )  # Quantidade de tokens disponíveis para o tipo de usuário
+    reading_style: Optional[List[int]] = Field(
+        sa_column=Column(ARRAY(Integer), nullable=True, default=[])
+    )  # IDs dos estilos de leitura disponíveis para o tipo de usuário
+    

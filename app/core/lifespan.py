@@ -17,12 +17,13 @@ from app.schemas.mission_type import MissionTypeSchemaBase
 from app.schemas.mission import MissionSchemaBase
 from app.schemas.user import UserSchemaBase
 from app.schemas.event import EventSchemaBase
+from app.schemas.reading_style import ReadingStyleSchemaBase
 
 
 from app.services.dailyScheduler import DailyScheduler
 from app.schemas.recurrence_mode import RecurrenceMode
 from app.schemas.recurrence_type import RecurrenceType
-
+from app.services.subscription import Subscription
 from app.services.calendar import Calendar
 
 from contextlib import asynccontextmanager
@@ -45,8 +46,15 @@ async def lifespan(app: FastAPI):
         await TopicSchemaBase.sync_topics(db)
         await MissionTypeSchemaBase.sync_mission_types(db)
         await EventSchemaBase.sync_events(db)
+        await ReadingStyleSchemaBase.sync_reading_styles(db)
 
     # Inicia o agendador
     start_jobs()
+    provide_daily_gifts = DailyScheduler(
+        scheduled_time=(datetime.datetime.now() + datetime.timedelta(seconds=10)).time(),
+        functions=[Subscription().create_daily_gift_for_all_users]
+    )
+
+    asyncio.create_task(provide_daily_gifts.start())
 
     yield

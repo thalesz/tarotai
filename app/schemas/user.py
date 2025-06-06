@@ -25,25 +25,80 @@ class UserSchemaBase(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = True
         
+    @staticmethod
+    async def update_user_type(
+        db: AsyncSession, user_id: int, new_user_type: int
+    ) -> dict:
+        """
+        Atualiza o tipo de usuário no banco de dados.
+        """
+        query = select(UserModel).where(UserModel.id == user_id)
+        result = await db.execute(query)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado",
+            )
+
+        # Verifica se o novo tipo de usuário existe no banco de dados
+        user_type_exists = await UserTypeSchemaBase.verify_user_type_exists(
+            db, new_user_type
+        )
+        if not user_type_exists:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Tipo de usuário não encontrado.",
+            )
+
+        # Atualiza o tipo de usuário
+        user.user_type = new_user_type
+        db.add(user)
+        await db.commit()
+        
+        return {"message": "Tipo de usuário atualizado com sucesso"}
+    
     
     @staticmethod
     async def get_all_id_by_status(
-        db: AsyncSession, status_id: int | list[int]
+        db: AsyncSession,
+        status_id: int | list[int] = None,
+        user_type: int | list[int] = None,
     ) -> list[int]:
         """
-        Obtém todos os IDs de usuários com um ou mais status fornecidos.
+        Obtém todos os IDs de usuários com status e/ou tipo de usuário fornecidos.
+        Se ambos forem fornecidos, retorna usuários que satisfaçam ambos os critérios.
+        Se apenas um for fornecido, retorna usuários que satisfaçam esse critério.
+        Se nenhum for fornecido, retorna lista vazia.
         """
-        if isinstance(status_id, list):
-            query = select(UserModel.id).where(UserModel.status.in_(status_id))
-        else:
-            query = select(UserModel.id).where(UserModel.status == status_id)
+        query = select(UserModel.id)
+        filters = []
+
+        if status_id is not None:
+            if isinstance(status_id, list):
+                filters.append(UserModel.status.in_(status_id))
+            else:
+                filters.append(UserModel.status == status_id)
+
+        if user_type is not None:
+            if isinstance(user_type, list):
+                filters.append(UserModel.user_type.in_(user_type))
+            else:
+                filters.append(UserModel.user_type == user_type)
+
+        if not filters:
+            return []
+
+        query = query.where(*filters)
+
         result = await db.execute(query)
         user_ids = result.scalars().all()
 
         if not user_ids:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Nenhum usuário encontrado com o(s) status fornecido(s)",
+                detail="Nenhum usuário encontrado com os critérios fornecidos",
             )
 
         return user_ids

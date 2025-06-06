@@ -11,6 +11,7 @@ from app.schemas.notification import NotificationSchema  # Import NotificationSc
 from app.core.configs import settings
 from app.services.email import EmailConfirmationSchema
 from app.services.token import TokenConfirmationSchema
+from app.services.subscription import Subscription
 
 # Import ws_manager from its module (update the import path as needed)
 from app.services.websocket import ws_manager
@@ -114,7 +115,11 @@ async def receive_confirmation_token_by_email(
         await EmailConfirmationSchema.send_active_email(email=user_email)
         
         message = "Conta confirmada com sucesso! Agora você pode acessar todos os recursos da plataforma."
-                # Cria a notificação
+
+
+        await Subscription.create_daily_gift_for_user(user_id=user_id, db=db)
+
+        # Cria a notificação
         notification = await NotificationSchema.create_notification(db, user_id, message)
 
         # Envia via WebSocket

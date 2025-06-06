@@ -8,6 +8,7 @@ from app.schemas.recurrence_type import RecurrenceType
 from app.schemas.user import UserSchemaBase
 from app.schemas.mission_type import MissionTypeSchemaBase
 from app.schemas.mission import MissionSchemaBase
+from app.schemas.user_type import UserTypeSchemaBase
 
 
 class Calendar:
@@ -87,8 +88,10 @@ class Calendar:
             id_pending = await StatusSchemaBase.get_id_by_name(db, "pending_confirmation")
             id_completed = await StatusSchemaBase.get_id_by_name(db, "completed")
             id_expired = await StatusSchemaBase.get_id_by_name(db, "expired")
+            # id_premium = await UserTypeSchemaBase.get_id_by_name(db, "premium")
 
             all_active_users = await UserSchemaBase.get_all_id_by_status(db, id_active)
+            # print(f"Total de usuários ativos: {(all_active_users)}")
             all_active_mission_types = await MissionTypeSchemaBase.get_all_id_by_status_and_recurrence_mode(db, id_active, self.id_calendar)
 
             for user_id in all_active_users:
