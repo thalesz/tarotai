@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/all",
+    "/avaliable",
     summary="Obter tiragens disponíveis por tipo",
     description="Este endpoint retorna uma lista de tipos de tiragem com a quantidade de tiragens disponíveis para cada tipo, associadas ao usuário autenticado.",
     response_description="Uma lista contendo os IDs, nomes dos tipos de tiragem e a quantidade de tiragens disponíveis.",

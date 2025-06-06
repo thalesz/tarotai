@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
     # Inicia o agendador
     start_jobs()
     provide_daily_gifts = DailyScheduler(
-        scheduled_time=(datetime.datetime.now() + datetime.timedelta(seconds=10)).time(),
+        scheduled_time=datetime.time(hour=18, minute=30),
         functions=[Subscription().create_daily_gift_for_all_users]
     )
 

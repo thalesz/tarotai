@@ -11,6 +11,9 @@ from app.schemas.event import EventSchemaBase
 from app.schemas.mission import MissionSchemaBase
 from app.schemas.user_type import UserTypeSchema
 from app.schemas.subscription import SubscriptionSchemaBase
+from app.schemas.notification import NotificationSchema
+from app.services.websocket import ws_manager  # Certifique-se de que o caminho está correto
+from app.services.subscription import Subscription  # Certifique-se de que o caminho está correto
 
 router = APIRouter()
 
@@ -111,6 +114,17 @@ async def update_user_status(
 
             if not subscription:
                 raise HTTPException(status_code=500, detail="Failed to create subscription.")
+            
+            message = "Parabéns! Seu status foi atualizado para Premium. Aproveite todos os benefícios exclusivos disponíveis para você."
+
+            await Subscription.create_daily_gift_for_user(user_id=user_id, db=db)
+
+            notification = await NotificationSchema.create_notification(db, user_id, message)
+
+            # Envia via WebSocket
+            await ws_manager.send_notification(str(user_id), message, notification.id)
+            
+            
 
             return {
                 "data": [
