@@ -96,10 +96,7 @@ class UserSchemaBase(BaseModel):
         user_ids = result.scalars().all()
 
         if not user_ids:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Nenhum usuário encontrado com os critérios fornecidos",
-            )
+            return []
 
         return user_ids
         

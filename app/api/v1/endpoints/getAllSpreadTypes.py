@@ -8,7 +8,7 @@ from app.schemas.spread_type import SpreadTypeSchemaBase  # Import SpreadTypeSch
 router = APIRouter()
 
 @router.get(
-    "/",
+    "/all",
     response_class=JSONResponse,
     summary="Recuperar todos os tipos de tiragens",
     description="Busca todos os tipos de spreads disponíveis no sistema. A resposta inclui o ID e o nome do tipo de spread.",
