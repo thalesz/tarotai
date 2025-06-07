@@ -29,7 +29,9 @@ from app.api.v1.endpoints import (
     getFiveDrawsByUser,
     getFiveDailyLuckyByUser,
     putPremiumStatus,
-    getAvaliableReadingStyle
+    getAvaliableReadingStyle,
+    postReview,
+    getFiveReviewByUser
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -141,6 +143,15 @@ active_router.include_router(
 
 active_router.include_router(
     getAvaliableReadingStyle.router, prefix="/reading-style", tags=["reading-style"]
+)
+
+active_router.include_router(
+    postReview.router, prefix="/review", tags=["review"]    
+)
+
+active_router.include_router(
+    getFiveReviewByUser.router, prefix="/review", tags=["review"]
+    
 )
 
 api_router.include_router(active_router)

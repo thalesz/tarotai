@@ -13,3 +13,4 @@ from app.models.mission import MissionModel  # Importando o MissionModel
 from app.models.event import EventModel  # Importando o EventModel
 from app.models.transaction import TransactionModel  # Importando o PrizeModel
 from app.models.notification import Notification  # Importando o NotificationModel
+from app.models.review import ReviewModel  # Importando o ReviewModel

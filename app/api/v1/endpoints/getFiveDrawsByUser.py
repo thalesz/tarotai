@@ -13,6 +13,8 @@ from app.schemas.status import StatusSchema
 from app.schemas.topic import TopicSchema
 from app.services.token import TokenInfoSchema
 
+from app.services.extract import JsonExtractor
+
 router = APIRouter()
 
 @router.get(
@@ -120,6 +122,8 @@ async def get_five_draws(
             topics = await TopicSchema.get_topic_names_by_id(db, draw.topics)
             if not topics:
                 raise HTTPException(status_code=404, detail="Tópicos não encontrados.")
+            
+            extracted_reading = JsonExtractor.extract_json_from_reading(draw.reading)
 
             draws_list.append({
                 "id": draw.id,
@@ -128,7 +132,7 @@ async def get_five_draws(
                 "cards": cards,
                 "context": draw.context,
                 "status": "Completo",
-                "reading": draw.reading,
+                "reading": extracted_reading,
                 "topics": topics,
                 "created_at": draw.created_at.isoformat(),
                 "used_at": draw.used_at.isoformat() if draw.used_at else None
@@ -139,5 +143,3 @@ async def get_five_draws(
     except SQLAlchemyError as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro de banco de dados: {str(e)}") from e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro inesperado: {str(e)}") from e

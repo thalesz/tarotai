@@ -12,6 +12,18 @@ class DrawSchemaBase(BaseModel):
         orm_mode = True
         arbitrary_types_allowed = True  # Allows arbitrary types like SQLAlchemy's DateTime
         validate_assignment = True
+        
+    @staticmethod
+    async def verify_draw_belongs_to_user(
+        session, draw_id: int, user_id: int
+    ) -> bool:
+        """
+        Verifica se o draw pertence ao usuário.
+        """
+        query = text("SELECT COUNT(*) FROM draws WHERE id = :draw_id AND user_id = :user_id")
+        result = await session.execute(query, {"draw_id": draw_id, "user_id": user_id})
+        count = result.scalar()
+        return count > 0
     
     @staticmethod
     async def get_spread_type_id_by_draw_id(
@@ -65,6 +77,7 @@ class DrawSchemaBase(BaseModel):
         """
         Get draws for a specific user and spread type, paginated by count.
         For count=1, returns the 5 most recent; for count=2, returns the next 5, etc.
+        If no draws are found, returns an empty list.
         """
         offset = (count - 1) * limit
 
@@ -88,6 +101,9 @@ class DrawSchemaBase(BaseModel):
 
         rows = result.fetchall()
 
+        if not rows:
+            return []
+
         draws = [
             DrawModel(
                 id=row.id,
@@ -101,9 +117,6 @@ class DrawSchemaBase(BaseModel):
             )
             for row in rows
         ]
-        
-        
-            
         return draws
 
     @staticmethod

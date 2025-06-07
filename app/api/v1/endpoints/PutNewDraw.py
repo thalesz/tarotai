@@ -245,10 +245,19 @@ async def update_draw(
         
         topic_name = await TopicSchema.get_all_topics_names(db)
         
+
+
+        # aqui pegar as draws antigas com a mesma tag, usando o contexto
+        
+        
+
         prompt_analise_contexto = (
             f"O contexto fornecido é '{draw_data.context}'.\n"
             f"Os tópicos disponíveis são: {topic_name}.\n"
             f"Analise o contexto e retorne os dois tópicos que mais se encaixam no formato ['topic1', 'topic2']."
+            f" o formato deve ser exatamente o seguinte: ['topic1', 'topic2'].\n"
+            f"Se não houver tópicos correspondentes, retorne uma lista vazia [].\n"
+            f"o formato deve ser respeitado, pois o restante da API depende disso.\n"
         )
         
 
@@ -259,18 +268,25 @@ async def update_draw(
         openai_service = OpenAIService()  # Initialize the OpenAIService
         matching_topics = await openai_service.gerar_texto(
             prompt_ajustado=prompt_analise_contexto,
-            max_tokens=30,
+            max_tokens=40,
             role=role_analise_contexto,
             temperature=0.95
         )
+        
+        
 
         print(f"Tópicos correspondentes: {matching_topics}")
         
         # return {'matching_topics': matching_topics}
         # Ensure matching_topics is parsed into a Python list
         if isinstance(matching_topics, str):
+            import re
             import ast
-            matching_topics = ast.literal_eval(matching_topics)
+            match = re.search(r"\[.*?\]", matching_topics, re.DOTALL)
+            if match:
+                matching_topics = ast.literal_eval(match.group(0))
+            else:
+                matching_topics = []
         
         list_id_topics = await TopicSchema.get_all_topics_ids_by_list_names(db, matching_topics)
         
@@ -278,34 +294,43 @@ async def update_draw(
 
         #pega o nome do usuario
         user_name = await UserSchemaBase.get_user_name_by_id(db, user_id) 
-        
-        
+
+        print(f"Nomes das cartas: {cards_names}")
         prompt_ajustado = (
-            f"As cartas fornecidas estão na ordem especificada.\n"
-            f"Faça uma tiragem de tarot com as cartas {cards_names}, o contexto '{draw_data.context}', o nome do usuário '{user_name}', "
-            f"o tipo de tiragem '{spreadname}', e o nome do deck '{deckname}'.\n"
-            f"É OBRIGATÓRIO aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível em toda a interpretação, "
-            f"seguindo rigorosamente a descrição: '{reading_style_description}'.\n"
-            f"Separe a resposta em introdução, tiragem para cada carta, e conclusão, e seja objetivo para que o consultante saiba o que fazer ao final.\n"
-            f"Retorne no formato de um dicionário JSON.\n"
-            f"Exemplo de resposta: ```json\n{{'introducao': '...', 'carta_1': '...', 'carta_2': '...', 'conclusao': '...'}}\n```\n"
-            f"É MUITO IMPORTANTE QUE O FORMATO SEJA EXATAMENTE O DETERMINADO, POIS O RESTANTE DA API DEPENDE DISSO.\n"
+            f"As cartas fornecidas estão na ordem especificada.\n\n"
+            f"Realize uma leitura de tarot utilizando as cartas {cards_names}, considerando o contexto '{draw_data.context}', "
+            f"o nome do consulente '{user_name}', o tipo de tiragem '{spreadname}' e o nome do baralho '{deckname}'.\n\n"
+            f"É **OBRIGATÓRIO** aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível durante toda a interpretação, "
+            f"seguindo rigorosamente a seguinte descrição: '{reading_style_description}'.\n\n"
+            f"A resposta deve ser dividida em três partes: **introdução**, **interpretação individual de cada carta**, e **conclusão**. "
+            f"Seja direto e objetivo para que o consulente saiba exatamente como agir após a leitura.\n\n"
+            f"O resultado **deve** ser retornado no seguinte formato de dicionário JSON:\n"
+            f"```json\n{{'introducao': '...', 'carta_1': '...', 'carta_2': '...', ..., 'conclusao': '...'}}\n```\n\n"
+            f"> ⚠️ **É EXTREMAMENTE IMPORTANTE que o formato seja seguido com exatidão, pois a API depende disso.**\n\n"
+            f"Se a tiragem tiver aspectos negativos, forneça uma análise honesta e construtiva. "
+            f"Todas as cartas fornecidas devem ser interpretadas, sem exceção."
         )
+
         role = (
-            "Você é o melhor tarólogo do mundo, com vasto conhecimento em tarot, simbolismo e consegue interpretar cartas de forma precisa tanto para noticias boas quanto ruins."
-            "Seus clientes se sente confortavel, voce consegue ser agradavel mesmo com noticias ruins que as vezes tem voce o ajuda. Vocenão tem medo de dar noticias ruins" 
-            "Sua missão é realizar uma tiragem de tarot excepcionalmente detalhada e precisa mesmo que a tiragem seja negativa. "
-            "Você deve usar uma linguagem clara e acessível, evitando jargões técnicos. Sem soar robótico ou artificial, "
-            "você deve se esforçar para ser o mais humano possível. como um amigo que está ajudando o outro."
-            "Certifique-se de que a interpretação seja precisa, inspiradora e ofereça insights valiosos ao consulente."
+            "Você é o melhor tarólogo do mundo, com profundo conhecimento em tarot, simbolismo e interpretações espirituais. "
+            "Sua leitura é precisa e sensível, tanto para boas quanto para más notícias. "
+            "Seus clientes se sentem confortáveis com você, pois mesmo diante de mensagens difíceis, você transmite tudo com empatia, clareza e acolhimento. "
+            "Você não teme revelar verdades desafiadoras — pelo contrário, sabe que isso pode ajudar o consulente a crescer e tomar decisões melhores.\n\n"
+            "Sua missão é realizar uma tiragem de tarot excepcionalmente detalhada, honesta e transformadora, mesmo quando as cartas trazem alertas ou desafios. "
+            "Use uma linguagem acessível, evitando jargões técnicos. "
+            "Fale de forma natural e humana, como um amigo sábio que está ali para apoiar e orientar. "
+            "Não pareça robótico ou artificial — seja autêntico, gentil e inspirador.\n\n"
+            "Certifique-se de que sua interpretação seja clara, valiosa e ofereça ao consulente reflexões e caminhos possíveis."
         )
+
         
         # openai_service = OpenAIService()  # Initialize the OpenAIService
         
         #pegar os tokens
         amount_tokens = await UserTypeSchema.get_token_amount_by_id(db, user_type_id)
-        max_tokens = (amount_tokens + 2) * card_count
-        print(f"Quantidade de tokens: {max_tokens}")
+        # print(f"Quantidade de tokens do usuário: {amount_tokens}")
+        max_tokens = (amount_tokens) * (card_count + 2)
+        # print(f"Quantidade de tokens: {max_tokens}")
         
         reading = await openai_service.gerar_texto(prompt_ajustado=prompt_ajustado, role=role, max_tokens=max_tokens, temperature=0.9)
          
