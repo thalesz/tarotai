@@ -20,6 +20,15 @@ class UserTypeModel(Base, SQLModel, table=True):
     reading_style: List[int] = Field(
         default=None, sa_column=Column(ARRAY(Integer), nullable=True)
     )
+    planet: List[int] = Field(
+        default=None, sa_column=Column(ARRAY(Integer), nullable=True)
+    )
+    #tamanho do contexto, ou seja tiragens q vao ser levadas em conta na hora do prompt
+
+    context_amount: int = Field(
+        default=None, sa_column=Column(Integer, nullable=True)
+    )
+    
 
     class Config:
         arbitrary_types_allowed = True

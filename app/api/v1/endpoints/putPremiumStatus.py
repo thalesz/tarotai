@@ -9,11 +9,15 @@ from app.schemas.user import UserSchemaBase
 from app.schemas.status import StatusSchemaBase
 from app.schemas.event import EventSchemaBase
 from app.schemas.mission import MissionSchemaBase
-from app.schemas.user_type import UserTypeSchema
+from app.schemas.user_type import UserTypeSchema, UserTypeSchemaBase
 from app.schemas.subscription import SubscriptionSchemaBase
 from app.schemas.notification import NotificationSchema
 from app.services.websocket import ws_manager  # Certifique-se de que o caminho está correto
 from app.services.subscription import Subscription  # Certifique-se de que o caminho está correto
+from app.schemas.planet import PlanetSchemaBase  # Certifique-se de que o caminho está correto
+from app.services.descricao_astrologica import DescricaoAstrologicaService  # Certifique-se de que o caminho está correto
+from app.schemas.personal_sign import PersonalSignSchema  # Certifique-se de que o caminho está correto
+from app.schemas.zodiac import ZodiacSchemaBase  # Certifique-se de que o caminho está correto
 
 router = APIRouter()
 
@@ -115,14 +119,55 @@ async def update_user_status(
             if not subscription:
                 raise HTTPException(status_code=500, detail="Failed to create subscription.")
             
-            message = "Parabéns! Seu status foi atualizado para Premium. Aproveite todos os benefícios exclusivos disponíveis para você."
+            
+            # atualizar a descricao dos planetas
+            
+            # tem que pegar os planetas que o usuario tem acesso
+            all_planets = await PlanetSchemaBase.get_all_planet_ids_and_names(db)
+            allowed_planets = await UserTypeSchemaBase.get_planets_by_user_type_id(db, premium_user_type_id)
+            
+            max_tokens = int(await UserTypeSchema.get_token_amount_by_id(db, premium_user_type_id))
+            #pegar o birth info do usuario
+            user_birth_info = await UserSchemaBase.get_birth_info_by_id(db, user_id)
+            print(f"User birth info: {user_birth_info}")
+            for planet in all_planets:
+                
+                print(f"Processing planet: {planet['name']} (ID: {planet['id']})")
+                planet_id = planet["id"]
+                print(f"Planet ID: {planet_id}, Name: {planet['name']}")
+                planet_name = planet["name"]
+                acesso_premium = planet_id in allowed_planets
+                descricao_service = DescricaoAstrologicaService()
+                signo, grau = await PersonalSignSchema.get_sign_and_degree_by_user_and_planet(
+                    db, user_id, planet_id
+                )
+                
+                # pega o nome do signo
+                nome_signo = await ZodiacSchemaBase.get_zodiac_name_by_id(db, signo)
+                
+                await descricao_service.gerar_e_salvar_descricao(
+                    db=db,
+                    user_id=user_id,
+                    birth_date=user_birth_info['birth_date'],
+                    birth_time=user_birth_info['birth_time'],
+                    birth_place=user_birth_info['birth_place'],
+                    planet_id=planet_id,
+                    planet_name=planet_name,
+                    acesso_premium=acesso_premium,
+                    max_tokens=max_tokens,
+                    signo=nome_signo,
+                    grau=grau
+                )
+
 
             await Subscription.create_daily_gift_for_user(user_id=user_id, db=db)
-
+            message = f"Parabéns! Você agora é um usuário premium. Aproveite todos os benefícios exclusivos!"
             notification = await NotificationSchema.create_notification(db, user_id, message)
 
             # Envia via WebSocket
             await ws_manager.send_notification(str(user_id), message, notification.id)
+            
+            
             
             
 

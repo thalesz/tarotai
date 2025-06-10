@@ -20,6 +20,29 @@ class UserTypeSchemaBase(BaseModel):
         validate_assignment = True
         
     @staticmethod
+    async def get_planets_by_user_type_id(
+        session: AsyncSession, user_type_id: int
+    ) -> List[int]:
+        """
+        Retorna os IDs dos planetas disponíveis para o tipo de usuário especificado.
+        """
+        result = await session.execute(
+            select(UserTypeModel.planet).where(UserTypeModel.id == user_type_id)
+        )
+        planets = result.scalar_one_or_none()
+        return planets if planets else []
+        
+    @staticmethod
+    async def get_context_amount_by_id(session: AsyncSession, user_type_id: int) -> Optional[int]:
+        """
+        Retorna a quantidade de contexto disponível para o tipo de usuário especificado.
+        """
+        result = await session.execute(
+            select(UserTypeModel.context_amount).where(UserTypeModel.id == user_type_id)
+        )
+        return result.scalar_one_or_none()
+        
+    @staticmethod
     async def check_reading_style_belongs_to_user(
         session: AsyncSession, user_type_id: int, reading_style_id: int
     ) -> bool:
@@ -99,7 +122,6 @@ class UserTypeSchemaBase(BaseModel):
         
         return result.scalars().first() is not None
     
-    
     @staticmethod
     async def get_name_by_id(session: AsyncSession, id: int) -> str:
         """
@@ -110,6 +132,7 @@ class UserTypeSchemaBase(BaseModel):
         )
         return result.scalar() if result else None
 
+    
     @staticmethod 
     async def verify_user_type_exists(session: AsyncSession, user_type_id: int) -> bool:
         """
@@ -138,7 +161,9 @@ class UserTypeSchemaBase(BaseModel):
                     accessible_card_type_ids=user_type["accessible_card_type_ids"],
                     token_amount=user_type["token_amount"],
                     daily_gift=user_type.get("daily_gift", []),
-                    reading_style=user_type.get("reading_style", [])
+                    reading_style=user_type.get("reading_style", []),
+                    context_amount=user_type.get("context_amount", 0),
+                    planet=user_type.get("planet", [])
                 )
                 session.add(new_user_type)
                 try:
@@ -181,4 +206,9 @@ class UserTypeSchema(UserTypeSchemaBase):
     reading_style: Optional[List[int]] = Field(
         sa_column=Column(ARRAY(Integer), nullable=True, default=[])
     )  # IDs dos estilos de leitura disponíveis para o tipo de usuário
-    
+    context_amount: Optional[int] = Field(
+        sa_column=Column(Integer, nullable=True, default=0)
+    )  # Quantidade de contexto disponível para o tipo de usuário
+    planet: Optional[List[int]] = Field(
+        sa_column=Column(ARRAY(Integer), nullable=True, default=[])
+    )

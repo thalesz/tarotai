@@ -18,6 +18,9 @@ from app.schemas.mission import MissionSchemaBase
 from app.schemas.user import UserSchemaBase
 from app.schemas.event import EventSchemaBase
 from app.schemas.reading_style import ReadingStyleSchemaBase
+from app.schemas.planet import PlanetSchemaBase
+
+from app.schemas.zodiac import ZodiacSchemaBase
 
 
 from app.services.dailyScheduler import DailyScheduler
@@ -25,6 +28,7 @@ from app.schemas.recurrence_mode import RecurrenceMode
 from app.schemas.recurrence_type import RecurrenceType
 from app.services.subscription import Subscription
 from app.services.calendar import Calendar
+from app.services.zodiac import DailyZodiacService
 
 from contextlib import asynccontextmanager
 from app.services.scheduler import start_jobs
@@ -47,6 +51,11 @@ async def lifespan(app: FastAPI):
         await MissionTypeSchemaBase.sync_mission_types(db)
         await EventSchemaBase.sync_events(db)
         await ReadingStyleSchemaBase.sync_reading_styles(db)
+        await PlanetSchemaBase.sync_planets(db)
+        await ZodiacSchemaBase.sync_zodiacs(db)
+
+
+
 
     # Inicia o agendador
     start_jobs()
@@ -54,7 +63,15 @@ async def lifespan(app: FastAPI):
         scheduled_time=datetime.time(hour=18, minute=30),
         functions=[Subscription().create_daily_gift_for_all_users]
     )
+    
+    now = datetime.datetime.now()
+    next_run = (now + datetime.timedelta(seconds=30)).time()
+    provide_daily_horoscope = DailyScheduler(
+        scheduled_time=next_run,
+        functions=[DailyZodiacService().create_daily_zodiac_for_all_users]
+    )
 
     asyncio.create_task(provide_daily_gifts.start())
+    asyncio.create_task(provide_daily_horoscope.start())
 
     yield

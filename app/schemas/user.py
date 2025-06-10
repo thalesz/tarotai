@@ -25,6 +25,52 @@ class UserSchemaBase(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = True
         
+    async def get_birth_info_by_id(
+        db: AsyncSession, user_id: int
+    ) -> dict:
+        """
+        Obtém as informações de nascimento do usuário pelo ID.
+        """
+        query = select(UserModel).where(UserModel.id == user_id)
+        result = await db.execute(query)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado",
+            )
+
+        return {
+            "birth_date": user.birth_date,
+            "birth_time": user.birth_time,
+            "birth_place": user.birth_place,
+        }
+
+    async def atualizar_info_nascimento(
+        db: AsyncSession, user_id: int, birth_date: str, birth_time: str = None, birth_place: str = None
+    ) -> None:
+        """
+        Atualiza as informações de nascimento do usuário no banco de dados.
+        """
+        query = select(UserModel).where(UserModel.id == user_id)
+        result = await db.execute(query)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado",
+            )
+
+        # Atualiza os campos de nascimento
+        user.birth_date = birth_date
+        user.birth_time = birth_time
+        user.birth_place = birth_place
+
+        db.add(user)
+        await db.commit()
+        
     @staticmethod
     async def update_user_type(
         db: AsyncSession, user_id: int, new_user_type: int
@@ -65,12 +111,14 @@ class UserSchemaBase(BaseModel):
         db: AsyncSession,
         status_id: int | list[int] = None,
         user_type: int | list[int] = None,
+        require_birth_info: bool = False,
     ) -> list[int]:
         """
         Obtém todos os IDs de usuários com status e/ou tipo de usuário fornecidos.
         Se ambos forem fornecidos, retorna usuários que satisfaçam ambos os critérios.
         Se apenas um for fornecido, retorna usuários que satisfaçam esse critério.
         Se nenhum for fornecido, retorna lista vazia.
+        Se require_birth_info=True, retorna apenas usuários que possuem birth_date, birth_time e birth_place preenchidos.
         """
         query = select(UserModel.id)
         filters = []
@@ -86,6 +134,11 @@ class UserSchemaBase(BaseModel):
                 filters.append(UserModel.user_type.in_(user_type))
             else:
                 filters.append(UserModel.user_type == user_type)
+
+        if require_birth_info:
+            filters.append(UserModel.birth_date.isnot(None))
+            filters.append(UserModel.birth_time.isnot(None))
+            filters.append(UserModel.birth_place.isnot(None))
 
         if not filters:
             return []
@@ -548,4 +601,23 @@ class UserSchemaUpdate(UserSchema):
     refresh_token: str = Field(
         None,
         description="Token de atualização do usuário. Opcional.",
+    )
+
+class UserBirthInfoSchema(UserSchema):
+    """
+    Schema para as informações de nascimento do usuário.
+    """
+    
+        
+    birth_date: str = Field(
+        ...,
+        description="Data de nascimento do usuário no formato YYYY-MM-DD.",
+    )
+    birth_time: str = Field(
+        None,
+        description="Horário de nascimento do usuário no formato HH:MM:SS. Opcional.",
+    )
+    birth_place: str = Field(
+        None,
+        description="Local de nascimento do usuário. Opcional.",
     )

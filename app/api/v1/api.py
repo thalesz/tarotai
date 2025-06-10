@@ -31,7 +31,11 @@ from app.api.v1.endpoints import (
     putPremiumStatus,
     getAvaliableReadingStyle,
     postReview,
-    getFiveReviewByUser
+    getFiveReviewByUser,
+    putBirthInfo,
+    getAllPlanet,
+    getSignByPlanet,
+    getLastZodiacDaily
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -152,6 +156,19 @@ active_router.include_router(
 active_router.include_router(
     getFiveReviewByUser.router, prefix="/review", tags=["review"]
     
+)
+active_router.include_router(
+    getSignByPlanet.router, prefix="/planet", tags=["planet"]
+)
+
+active_router.include_router(
+    getAllPlanet.router, prefix="/planet", tags=["planet"]
+)
+active_router.include_router(
+    putBirthInfo.router, prefix="/user", tags=["user"]
+)
+active_router.include_router(
+    getLastZodiacDaily.router, prefix="/daily-zodiac", tags=["daily-zodiac"]
 )
 
 api_router.include_router(active_router)

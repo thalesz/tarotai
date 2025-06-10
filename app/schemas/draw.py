@@ -14,6 +14,88 @@ class DrawSchemaBase(BaseModel):
         validate_assignment = True
         
     @staticmethod
+    async def get_draw_details_by_id(
+        session, draw_id: int
+    ) -> dict | None:
+        """
+            Recebe o draw_id e retorna as cartas, a leitura, o deck_id e o spread_type_id da própria tabela draws.
+            """
+        query = text("""
+                SELECT 
+                cards, 
+                reading, 
+                deck_id, 
+                spread_type_id
+                FROM draws
+                WHERE id = :draw_id
+            """)    
+        result = await session.execute(query, {"draw_id": draw_id})
+        row = result.fetchone()
+        if row:
+            return {
+                "cards": row.cards,
+                "reading": row.reading,
+                "deck_id": row.deck_id,
+                "spread_type_id": row.spread_type_id,
+            }
+        return None
+
+    @staticmethod
+    async def get_context_by_id(
+        session, draw_id: int
+    ) -> str | None:
+        """
+        Get the context of a draw by its ID.
+        """
+        query = text("SELECT context FROM draws WHERE id = :draw_id")
+        result = await session.execute(query, {"draw_id": draw_id})
+        row = result.fetchone()
+        if row:
+            return row[0]
+        return None
+
+    @staticmethod
+    async def get_draw_ids_by_topics(
+        session,
+        user_id: int,
+        topics: list[int],
+        spread_type_id: int | None = None,
+        limit: int = 5,
+        ) -> list[int]:
+        """
+        Get draw IDs for a specific user, optionally filtered by spread type, filtered by topics.
+        Returns the most recent draw IDs up to the specified limit.
+        At least one topic must match, but not necessarily all.
+        If only one draw matches, return just that one.
+        """
+        if not topics:
+            return []
+        base_query = """
+                    SELECT id
+                    FROM draws
+                    WHERE user_id = :user_id 
+                    AND topics && :topics
+                    """
+        params = {
+                    "user_id": user_id,
+                    "topics": topics,
+                    "limit": limit
+                }
+        if spread_type_id is not None:
+                    base_query += " AND spread_type_id = :spread_type_id"
+                    params["spread_type_id"] = spread_type_id
+        
+        base_query += " ORDER BY created_at DESC LIMIT :limit"
+        
+        query = text(base_query)
+        
+        result = await session.execute(query, params)
+        
+        rows = result.fetchall()
+        ids = [row.id for row in rows] if rows else []
+        return ids
+    
+    @staticmethod
     async def verify_draw_belongs_to_user(
         session, draw_id: int, user_id: int
     ) -> bool:

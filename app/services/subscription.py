@@ -8,6 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from collections import Counter
 from app.schemas.draw import DrawCreate  # Adjust the import path as needed
 from app.schemas.transaction import TransactionSchemaBase  # Adjust the import path as needed
+from app.schemas.planet import PlanetSchemaBase  # Adjust the import path as needed
+from app.schemas.user_type import UserTypeSchema  # Add this import
+from app.services.descricao_astrologica import DescricaoAstrologicaService  # Add this import
+from app.schemas.personal_sign import PersonalSignSchema  # Add this import
+from app.schemas.zodiac import ZodiacSchemaBase  # Add this import
 
 
 class Subscription:
@@ -152,6 +157,46 @@ class Subscription:
                         new_status=id_standard
                     )
                     print(f"User {user} has expired subscription and is now set to standard.")
+                    
+                    
+                    # atualiza a descrição dos planetas para o usuário
+                    
+                    # tem que pegar os planetas que o usuario tem acesso
+                    all_planets = await PlanetSchemaBase.get_all_planet_ids_and_names(db)
+                    allowed_planets = await UserTypeSchemaBase.get_planets_by_user_type_id(db, id_standard)
+
+                    max_tokens = int(await UserTypeSchema.get_token_amount_by_id(db, id_standard))
+                    #pegar o birth info do usuario
+                    user_birth_info = await UserSchemaBase.get_birth_info_by_id(db, user)
+                    print(f"User birth info: {user_birth_info}")
+                    for planet in all_planets:
+                        
+                        print(f"Processing planet: {planet['name']} (ID: {planet['id']})")
+                        planet_id = planet["id"]
+                        print(f"Planet ID: {planet_id}, Name: {planet['name']}")
+                        planet_name = planet["name"]
+                        acesso_premium = planet_id in allowed_planets
+                        descricao_service = DescricaoAstrologicaService()
+                        signo, grau = await PersonalSignSchema.get_sign_and_degree_by_user_and_planet(
+                            db, user, planet_id
+                        )
+                
+                # pega o nome do signo
+                        nome_signo = await ZodiacSchemaBase.get_zodiac_name_by_id(db, signo)
+                        await descricao_service.gerar_e_salvar_descricao(
+                            db=db,
+                            user_id=user,
+                            birth_date=user_birth_info['birth_date'],
+                            birth_time=user_birth_info['birth_time'],
+                            birth_place=user_birth_info['birth_place'],
+                            planet_id=planet_id,
+                            planet_name=planet_name,
+                            acesso_premium=acesso_premium,
+                            max_tokens=max_tokens,
+                            signo=nome_signo,
+                            grau=grau
+                        )
+            
                 else:
                     print(f"User {user} has an active subscription.")
     

@@ -14,7 +14,26 @@ class ReviewSchemaBase(BaseModel):
         "validate_assignment": True
     }
     
-    # se não tiver mais tem que retornar vazio 
+    @staticmethod
+    async def get_rating_and_comment_by_draw_id(
+        session: AsyncSession,
+        draw_id: int
+    ) -> tuple[int, str] | None:
+        """
+        Retrieve only the rating and comment by draw ID.
+        """
+        query = select(ReviewModel.rating, ReviewModel.comment).where(
+            ReviewModel.draw == draw_id
+        )
+
+        result = await session.execute(query)
+        row = result.first()
+
+        if row:
+            return row[0], row[1]
+        return None
+
+    # se não tiver mais tem que retornar vazio
     @staticmethod
     async def get_reviews_by_user(
         session: AsyncSession,

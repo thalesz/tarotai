@@ -14,3 +14,6 @@ from app.models.event import EventModel  # Importando o EventModel
 from app.models.transaction import TransactionModel  # Importando o PrizeModel
 from app.models.notification import Notification  # Importando o NotificationModel
 from app.models.review import ReviewModel  # Importando o ReviewModel
+from app.models.planet import PlanetModel  # Importando o PlanetModel
+from app.models.zodiac import ZodiacModel  # Importando o ZodiacSignModel
+from app.models.personalSign import PersonalSign # Importando o PersonalSignModel

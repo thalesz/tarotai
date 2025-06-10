@@ -17,6 +17,7 @@ from app.services.openai import OpenAIService  # Import OpenAIService
 from app.schemas.topic import TopicSchema  # Import TopicSchema
 from app.schemas.status import StatusSchema  # Import StatusSchema
 from app.schemas.reading_style import ReadingStyleSchema # Import ReadingStyleSchema
+from app.schemas.review import ReviewSchema  # Import ReviewSchema
 
 from app.services.extract import JsonExtractor  # Import JsonExtractor
 
@@ -254,10 +255,10 @@ async def update_draw(
         prompt_analise_contexto = (
             f"O contexto fornecido é '{draw_data.context}'.\n"
             f"Os tópicos disponíveis são: {topic_name}.\n"
-            f"Analise o contexto e retorne os dois tópicos que mais se encaixam no formato ['topic1', 'topic2']."
-            f" o formato deve ser exatamente o seguinte: ['topic1', 'topic2'].\n"
+            f"Analise o contexto e retorne todos os tópicos que se encaixam, no formato ['topic1', 'topic2', ...].\n"
+            f"O formato deve ser exatamente o seguinte: ['topic1', 'topic2', ...].\n"
             f"Se não houver tópicos correspondentes, retorne uma lista vazia [].\n"
-            f"o formato deve ser respeitado, pois o restante da API depende disso.\n"
+            f"O formato deve ser respeitado, pois o restante da API depende disso.\n"
         )
         
 
@@ -275,7 +276,7 @@ async def update_draw(
         
         
 
-        print(f"Tópicos correspondentes: {matching_topics}")
+        # print(f"Tópicos correspondentes: {matching_topics}")
         
         # return {'matching_topics': matching_topics}
         # Ensure matching_topics is parsed into a Python list
@@ -290,26 +291,160 @@ async def update_draw(
         
         list_id_topics = await TopicSchema.get_all_topics_ids_by_list_names(db, matching_topics)
         
-        print(f"Lista de ids dos topicos: {list_id_topics}")
+        # print(f"Lista de ids dos topicos: {list_id_topics}")
+        
+        # tem que pegar o limite de draw por tipo de usuario
 
-        #pega o nome do usuario
-        user_name = await UserSchemaBase.get_user_name_by_id(db, user_id) 
-
-        print(f"Nomes das cartas: {cards_names}")
-        prompt_ajustado = (
-            f"As cartas fornecidas estão na ordem especificada.\n\n"
-            f"Realize uma leitura de tarot utilizando as cartas {cards_names}, considerando o contexto '{draw_data.context}', "
-            f"o nome do consulente '{user_name}', o tipo de tiragem '{spreadname}' e o nome do baralho '{deckname}'.\n\n"
-            f"É **OBRIGATÓRIO** aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível durante toda a interpretação, "
-            f"seguindo rigorosamente a seguinte descrição: '{reading_style_description}'.\n\n"
-            f"A resposta deve ser dividida em três partes: **introdução**, **interpretação individual de cada carta**, e **conclusão**. "
-            f"Seja direto e objetivo para que o consulente saiba exatamente como agir após a leitura.\n\n"
-            f"O resultado **deve** ser retornado no seguinte formato de dicionário JSON:\n"
-            f"```json\n{{'introducao': '...', 'carta_1': '...', 'carta_2': '...', ..., 'conclusao': '...'}}\n```\n\n"
-            f"> ⚠️ **É EXTREMAMENTE IMPORTANTE que o formato seja seguido com exatidão, pois a API depende disso.**\n\n"
-            f"Se a tiragem tiver aspectos negativos, forneça uma análise honesta e construtiva. "
-            f"Todas as cartas fornecidas devem ser interpretadas, sem exceção."
+        context_amount = await UserTypeSchema.get_context_amount_by_id(db, user_type_id)
+        # pegar o id de todas as tiragens que tem pelo menos um dos topicos
+        draws_with_topics = await DrawSchemaBase.get_draw_ids_by_topics(
+            db,
+            user_id=user_id,
+            spread_type_id=draw_data.spread_type_id,
+            topics=list_id_topics
         )
+        # print(f"IDs de draws com tópicos correspondentes: {draws_with_topics}")
+        # variavel para salvar o contexto
+        preview_context = []
+        # lista para armazenar similaridades e detalhes
+        similar_draws = []
+
+        # para cada um dos ids vamos comparar o contexto passado com o contexto do id
+        for id in draws_with_topics:
+            context = await DrawSchemaBase.get_context_by_id(db, id)
+
+            prompt_comparador = (
+                f"Compare os dois contextos a seguir, considerando que podem ser diferentes facetas ou perspectivas da mesma história. "
+                f"Mesmo que usem palavras diferentes, avalie se tratam essencialmente do mesmo tema ou situação central:\n"
+                f"Contexto 1: '{draw_data.context}'\n"
+                f"Contexto 2: '{context}'\n"
+                f"Retorne um valor numérico de similaridade entre 0 e 1, onde 1 indica que são essencialmente o mesmo contexto (mesmo que descritos de formas diferentes), "
+                f"e 0 indica que não têm relação. "
+                f"Seja objetivo e considere o significado central dos contextos, não apenas as palavras. "
+                f"Retorne apenas o número decimal, sem explicações ou texto adicional."
+            )
+
+            role_comparador = (
+                "Você é um especialista em análise semântica de textos em português. "
+                "Sua tarefa é comparar dois contextos fornecidos, avaliando se, mesmo com palavras diferentes, tratam essencialmente do mesmo tema ou situação central. "
+                "Considere diferentes facetas ou perspectivas da mesma história. "
+                "Retorne apenas um número decimal entre 0 e 1, onde 1 indica contextos essencialmente iguais e 0 indica contextos sem relação. "
+                "Não forneça explicações, comentários ou qualquer texto adicional — apenas o valor numérico. "
+                "Seja rigoroso e objetivo, considerando o significado central dos contextos, não apenas as palavras."
+            )
+
+            token_comparador = 10
+            similaridade = await openai_service.gerar_texto(prompt_ajustado=prompt_comparador, role=role_comparador, max_tokens=token_comparador, temperature=0.9)
+
+            try:
+                similaridade_float = float(similaridade)
+            except Exception:
+                similaridade_float = 0.0
+
+            if similaridade and similaridade_float > 0.5:
+                previous_draw = await DrawSchemaBase.get_draw_details_by_id(db, id)
+                # print(f"Draw anterior: {previous_draw}")
+
+                previous_reading = previous_draw.get('reading')
+                if isinstance(previous_reading, str):
+                    try:
+                        previous_reading = JsonExtractor.extract_json_from_reading(previous_reading)
+                    except Exception:
+                        pass
+
+                prompt_resumo_leitura = (
+                    f"Resuma a leitura de tarot a seguir em uma frase curta e objetiva:\n"
+                    f"Contexto: {previous_draw.get('context')}\n"
+                    f"Nome do Baralho: {await DeckSchema.get_deck_name_by_id(db, previous_draw.get('deck_id'))}\n"
+                    f"Tipo de Spread: {await SpreadTypeSchema.get_spread_type_name_by_id(db, previous_draw.get('spread_type_id'))}\n"
+                    f"Carta(s): {previous_draw.get('cards')}\n"
+                    f"Leitura: {previous_reading}\n"
+                )
+                role_resumo_leitura = (
+                    "Você é um especialista em síntese de informações."
+                    "Sua tarefa é resumir a leitura de tarot fornecida, mantendo os pontos mais importantes e relevantes."
+                )
+
+                resumo_leitura = await openai_service.gerar_texto(
+                    prompt_ajustado=prompt_resumo_leitura,
+                    role=role_resumo_leitura,
+                    max_tokens=50,
+                    temperature=0.9
+                )
+                # print(f"Resumo da leitura anterior: {resumo_leitura}")
+                
+                #pegar a avaliação da tiragem somente se existir avaliação
+                review = await ReviewSchema.get_rating_and_comment_by_draw_id(db, id)
+                
+                if review:
+                    rating, comment = review
+                else:
+                    rating, comment = None, None
+
+                similar_draws.append({
+                    "similaridade": similaridade_float,
+                    "context": previous_draw.get('context'),
+                    "deck_name": await DeckSchema.get_deck_name_by_id(db, previous_draw.get('deck_id')),
+                    "spread_type_name": await SpreadTypeSchema.get_spread_type_name_by_id(db, previous_draw.get('spread_type_id')),
+                    "cards": previous_draw.get('cards'),
+                    "reading_summary": resumo_leitura,
+                    "rating": rating,
+                    "comment": comment
+                })
+
+        # Ordena: primeiro por rating (se existir, maior primeiro), depois por similaridade (maior primeiro)
+        def sort_key(x):
+            # Se rating não existe, considera -1 para ficar depois dos que têm rating
+            return (x["rating"] if x["rating"] is not None else -1, x["similaridade"])
+
+        similar_draws_sorted = sorted(similar_draws, key=sort_key, reverse=True)
+        preview_context = similar_draws_sorted[:context_amount]
+
+        # pega o nome do usuario
+        user_name = await UserSchemaBase.get_user_name_by_id(db, user_id)
+
+        # Monta o prompt ajustado incluindo o contexto anterior, se houver
+        if preview_context:
+            previous_contexts_str = "\n".join(
+                [
+                    f"- Contexto anterior: '{ctx['context']}', Baralho: '{ctx['deck_name']}', Spread: '{ctx['spread_type_name']}', Cartas: {ctx['cards']}, Resumo: {ctx['reading_summary']}"
+                    + (f", Avaliação do usuário: {ctx['rating']}, Comentário do usuário: '{ctx['comment']}'" if ctx['rating'] is not None else "")
+                    for ctx in preview_context
+                ]
+            )
+            prompt_ajustado = (
+                f"As cartas fornecidas estão na ordem especificada.\n\n"
+                f"Considere também os seguintes contextos e leituras anteriores do consulente para enriquecer sua análise e coletar informações relevantes para consulta atual:\n"
+                f"{previous_contexts_str}\n\n"
+                f"Realize uma leitura de tarot utilizando as cartas {cards_names}, considerando o contexto '{draw_data.context}', "
+                f"o nome do consulente '{user_name}', o tipo de tiragem '{spreadname}' e o nome do baralho '{deckname}'.\n\n"
+                f"É **OBRIGATÓRIO** aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível durante toda a interpretação, "
+                f"seguindo rigorosamente a seguinte descrição: '{reading_style_description}'.\n\n"
+                f"A resposta deve ser dividida em três partes: **introdução**, **interpretação individual de cada carta**, e **conclusão**. "
+                f"Seja direto e objetivo para que o consulente saiba exatamente como agir após a leitura.\n\n"
+                f"diga exatamente o que o consulente precisa fazer, sem rodeios. exemplo: se ele pedir um sabor de pizza de um sabor exato cm base nas cartas \n\n"
+                f"O resultado **deve** ser retornado no seguinte formato de dicionário JSON VÁLIDO (com aspas duplas):\n"
+                f"```json\n{{\"introducao\": \"...\", \"carta_1\": \"...\", \"carta_2\": \"...\", ..., \"conclusao\": \"...\"}}\n```\n\n"
+                f"> ⚠️ **É EXTREMAMENTE IMPORTANTE que o formato seja seguido com exatidão, usando aspas duplas em todas as chaves e valores, pois a API depende disso.**\n\n"
+                f"Se a tiragem tiver aspectos negativos, forneça uma análise honesta e construtiva. "
+                f"Todas as cartas fornecidas devem ser interpretadas, sem exceção."
+            )
+        else:
+            prompt_ajustado = (
+                f"As cartas fornecidas estão na ordem especificada.\n\n"
+                f"Realize uma leitura de tarot utilizando as cartas {cards_names}, considerando o contexto '{draw_data.context}', "
+                f"o nome do consulente '{user_name}', o tipo de tiragem '{spreadname}' e o nome do baralho '{deckname}'.\n\n"
+                f"É **OBRIGATÓRIO** aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível durante toda a interpretação, "
+                f"seguindo rigorosamente a seguinte descrição: '{reading_style_description}'.\n\n"
+                f"A resposta deve ser dividida em três partes: **introdução**, **interpretação individual de cada carta**, e **conclusão**. "
+                f"Seja direto e objetivo para que o consulente saiba exatamente como agir após a leitura.\n\n"
+                f"diga exatamente o que o consulente precisa fazer, sem rodeios. exemplo: se ele pedir um sabor de pizza de um sabor exato cm base nas cartas \n\n"
+                f"O resultado **deve** ser retornado no seguinte formato de dicionário JSON VÁLIDO (com aspas duplas):\n"
+                f"```json\n{{\"introducao\": \"...\", \"carta_1\": \"...\", \"carta_2\": \"...\", ..., \"conclusao\": \"...\"}}\n```\n\n"
+                f"> ⚠️ **É EXTREMAMENTE IMPORTANTE que o formato seja seguido com exatidão, usando aspas duplas em todas as chaves e valores, pois a API depende disso.**\n\n"
+                f"Se a tiragem tiver aspectos negativos, forneça uma análise honesta e construtiva. "
+                f"Todas as cartas fornecidas devem ser interpretadas, sem exceção."
+            )
 
         role = (
             "Você é o melhor tarólogo do mundo, com profundo conhecimento em tarot, simbolismo e interpretações espirituais. "
@@ -323,27 +458,14 @@ async def update_draw(
             "Certifique-se de que sua interpretação seja clara, valiosa e ofereça ao consulente reflexões e caminhos possíveis."
         )
 
-        
-        # openai_service = OpenAIService()  # Initialize the OpenAIService
-        
         #pegar os tokens
         amount_tokens = await UserTypeSchema.get_token_amount_by_id(db, user_type_id)
-        # print(f"Quantidade de tokens do usuário: {amount_tokens}")
         max_tokens = (amount_tokens) * (card_count + 2)
-        # print(f"Quantidade de tokens: {max_tokens}")
-        
+
         reading = await openai_service.gerar_texto(prompt_ajustado=prompt_ajustado, role=role, max_tokens=max_tokens, temperature=0.9)
-         
-        
-        # if isinstance(reading, str):
-        #     import ast
-        #     reading= ast.literal_eval(reading)  
-        
-        # depois da leitura, atualiza o draw com as cartas e o contexto
-        # e o status para (active)
-        
+
         status_id = await StatusSchema.get_id_by_name(db, "completed")
-        
+
         draw = await DrawSchemaBase.update_draw_after_standard_reading(
             db, 
             draw_id=id_draw, 
@@ -352,20 +474,16 @@ async def update_draw(
             deck_id=draw_data.deck_id,
             cards=draw_data.cards,
             context=draw_data.context,
-            status_id=status_id,  # Assuming 1 is the ID for 'active'
+            status_id=status_id,
             reading=reading,
             topics=list_id_topics
         )
-        
-        # Split the reading into introduction, individual card readings, and conclusion
 
         reading = JsonExtractor.extract_json_from_reading(reading)
-        #print(f"Prompt ajustado: {prompt_ajustado}")
-        #print(f"Leitura: {reading}")
         return {"leitura": reading}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"Erro ao buscar os eventos: {e}")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro ao buscar os eventos.")
 
-        
-    except SQLAlchemyError as e:
-        print(f"SQLAlchemyError: {str(e)}")
-        await db.rollback()
-        raise HTTPException(status_code=500, detail=f"An error occurred while updating the draw: {str(e)}") from e
