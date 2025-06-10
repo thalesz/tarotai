@@ -65,7 +65,7 @@ async def lifespan(app: FastAPI):
     )
     
     now = datetime.datetime.now()
-    next_run = (now + datetime.timedelta(seconds=30)).time()
+    next_run = datetime.time(hour=0, minute=30)
     provide_daily_horoscope = DailyScheduler(
         scheduled_time=next_run,
         functions=[DailyZodiacService().create_daily_zodiac_for_all_users]

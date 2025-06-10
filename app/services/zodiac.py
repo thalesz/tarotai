@@ -58,6 +58,7 @@ class DailyZodiacService:
         Create a daily zodiac for a specific user.
         """
         try:
+            print(f"Creating daily zodiac for user {user_id}...")
             # Inicializa o dicionário das posições dos planetas (se ainda não estiver inicializado)
             await self._initialize_planet_positions(db)
 

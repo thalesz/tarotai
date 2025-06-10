@@ -14,6 +14,8 @@ from app.schemas.personal_sign import PersonalSignSchema
 from app.schemas.zodiac import ZodiacSchemaBase
 from app.services.planet import  PlanetSignCalculator
 from app.services.descricao_astrologica import DescricaoAstrologicaService
+
+from app.services.zodiac import DailyZodiacService
 router = APIRouter()
 
 
@@ -54,7 +56,7 @@ Atualiza as informações de nascimento do usuário.
         500: {"description": "Erro interno do servidor"}
     }
 )
-async def put_new_review(
+async def put_birth_info(
     payload: UserBirthInfoSchema,
     request: Request,
     db: AsyncSession = Depends(get_session)
@@ -121,6 +123,14 @@ async def put_new_review(
             )
 
             planet_results.append(result)
+            
+        # agora cria a leitura diaria do usuario
+        daily_zodiac_service = DailyZodiacService()
+        await daily_zodiac_service.create_daily_zodiac_for_user(
+            db=db,
+            user_id=user_id,
+        )
+        
         return {
             "message": "Informações de nascimento atualizadas com sucesso.",
         }
