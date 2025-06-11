@@ -13,6 +13,9 @@ from app.services.email import EmailConfirmationSchema
 from app.services.token import TokenConfirmationSchema
 from app.services.subscription import Subscription
 
+# Import DailyPathService for creating daily path
+from app.services.daily_path import DailyPathService
+
 # Import ws_manager from its module (update the import path as needed)
 from app.services.websocket import ws_manager
 
@@ -116,12 +119,10 @@ async def receive_confirmation_token_by_email(
         
         message = "Conta confirmada com sucesso! Agora você pode acessar todos os recursos da plataforma."
 
-
-        await Subscription.create_daily_gift_for_user(user_id=user_id, db=db)
-
-        # Cria a notificação
+        # cria o daily path para o usuário
+        daily_path_service = DailyPathService()
+        await daily_path_service.create_daily_path_for_user(user_id=user_id, db=db)
         notification = await NotificationSchema.create_notification(db, user_id, message)
-
         # Envia via WebSocket
         await ws_manager.send_notification(str(user_id), message, notification.id)
 

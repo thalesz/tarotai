@@ -35,7 +35,8 @@ from app.api.v1.endpoints import (
     putBirthInfo,
     getAllPlanet,
     getSignByPlanet,
-    getLastZodiacDaily
+    getLastZodiacDaily,
+    getLastDailyPath
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -170,6 +171,10 @@ active_router.include_router(
 active_router.include_router(
     getLastZodiacDaily.router, prefix="/daily-zodiac", tags=["daily-zodiac"]
 )
+active_router.include_router(
+    getLastDailyPath.router, prefix="/daily-path", tags=["daily-path"]
+)
+    
 
 api_router.include_router(active_router)
 

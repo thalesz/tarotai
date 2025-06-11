@@ -23,6 +23,9 @@ class DailyZodiacService:
     def __init__(self):
         # Inicializa o dicionário com as posições atuais dos planetas uma única vez
         self.current_positions_dict = None
+        
+        
+        
 
     async def _initialize_planet_positions(self, db: AsyncSession):
         if self.current_positions_dict is None:
@@ -72,6 +75,7 @@ class DailyZodiacService:
                 zodiac_sign = await PersonalSignSchema.get_sign_by_planet_id(
                     session=db, user_id=user_id, planet_id=id
                 )
+                
                 # print(f"Zodiac sign for planet ID {id}: {zodiac_sign}")  # Debugging line to check the zodiac sign
                 zodiac_name = None
                 zodiac_degree = None

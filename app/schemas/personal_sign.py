@@ -78,14 +78,14 @@ class PersonalSignSchemaBase(BaseModel):
         # 1) Tenta buscar existente
         stmt = select(PersonalSign).where(
             PersonalSign.user == user_id,
-            PersonalSign.planet == planet_id,
-            PersonalSign.zodiac_sign == zodiac_sign_id,
+            PersonalSign.planet == planet_id
         )
         result = await session.execute(stmt)
         existing: PersonalSign | None = result.scalars().one_or_none()
 
         if existing:
             # 2) Atualiza campos
+            existing.zodiac_sign = zodiac_sign_id
             existing.description = description
             existing.degree = degree
             session.add(existing)  # marca para update

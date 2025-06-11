@@ -22,6 +22,8 @@ from app.schemas.planet import PlanetSchemaBase
 
 from app.schemas.zodiac import ZodiacSchemaBase
 
+from app.schemas.daily_path import DailyPathSchemaBase
+
 
 from app.services.dailyScheduler import DailyScheduler
 from app.schemas.recurrence_mode import RecurrenceMode
@@ -29,6 +31,7 @@ from app.schemas.recurrence_type import RecurrenceType
 from app.services.subscription import Subscription
 from app.services.calendar import Calendar
 from app.services.zodiac import DailyZodiacService
+from app.services.daily_path import DailyPathService
 
 from contextlib import asynccontextmanager
 from app.services.scheduler import start_jobs
@@ -70,7 +73,14 @@ async def lifespan(app: FastAPI):
         scheduled_time=next_run,
         functions=[DailyZodiacService().create_daily_zodiac_for_all_users]
     )
-
+    
+    # Agenda a tarefa para rodar daqui a 30 segundos a partir de agora
+    run_in_30_seconds = (datetime.datetime.now() + datetime.timedelta(seconds=30)).time()
+    provide_daily_path = DailyScheduler(
+        scheduled_time=run_in_30_seconds,
+        functions=[DailyPathService().create_daily_path_for_all_users]
+    )
+    asyncio.create_task(provide_daily_path.start())
     asyncio.create_task(provide_daily_gifts.start())
     asyncio.create_task(provide_daily_horoscope.start())
 

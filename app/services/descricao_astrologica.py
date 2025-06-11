@@ -33,6 +33,10 @@ class DescricaoAstrologicaService:
         #     birth_place,
         #     planet_name.upper()
         # )
+        
+        print("birth_date:", birth_date)
+        print("birth_time:", birth_time)
+        print("birth_place:", birth_place)
 
         tokens_para_usar = max_tokens if acesso_premium else 60
 

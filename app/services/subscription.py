@@ -75,8 +75,8 @@ class Subscription:
         if last_transaction_draws:
             for draw in last_transaction_draws:
                 draw_status = await DrawCreate.get_draw_status_by_id(session=db, draw_id=draw)
-                spread_type_id = await DrawCreate.get_spread_type_id_by_draw_id(session=db, draw_id=draw)
                 if draw_status == id_pending_confirmation:
+                    spread_type_id = await DrawCreate.get_spread_type_id_by_draw_id(session=db, draw_id=draw)
                     pending_gift_counts[spread_type_id] = pending_gift_counts.get(spread_type_id, 0) + 1
                     await DrawCreate.update_created_at(session=db, draw_id=draw)
                     new_draws.append(draw)

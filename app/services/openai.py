@@ -1,3 +1,4 @@
+import asyncio
 from openai import AzureOpenAI
 import os
 from dotenv import load_dotenv
@@ -12,22 +13,25 @@ class OpenAIService:
         )
 
     async def gerar_texto(self, prompt_ajustado: str, role: str, max_tokens, temperature) -> str:
-        try:
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",  # Ou o nome do deployment no Azure, como "gpt-35-turbo"
-                messages=[
-                    {"role": "system", "content": role},
-                    {"role": "user", "content": prompt_ajustado}
-                ],
-                max_tokens=max_tokens,  # Define o limite máximo de tokens (ou palavras/frases curtas) que o modelo pode gerar.
-                                 # Neste caso, está configurado para 140 tokens, que é aproximadamente metade do limite de caracteres de um tweet (280 caracteres).
-                                 # Isso ajuda a garantir que o texto gerado seja curto e conciso, adequado para tweets.
+        tentativas = 0
+        max_tentativas = 5
 
-                temperature=temperature  # Controla a aleatoriedade do modelo na geração de texto.
-                                 # Valores mais baixos (ex.: 0.2) tornam o texto mais determinístico e previsível.
-                                 # Valores mais altos (ex.: 0.9) tornam o texto mais criativo e imprevisível.
-                                 # Aqui, foi configurado para 0.9, incentivando respostas mais criativas.
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            return f"Erro ao gerar texto: {str(e)}"
+        while tentativas < max_tentativas:
+            try:
+                response = self.client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": role},
+                        {"role": "user", "content": prompt_ajustado}
+                    ],
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+                return response.choices[0].message.content.strip()
+            except Exception as e:
+                tentativas += 1
+                print(f"[Tentativa {tentativas}] Erro ao gerar texto: {e}")
+                if tentativas < max_tentativas:
+                    await asyncio.sleep(2 ** (tentativas - 1))  # 1s, 2s, 4s, 8s...
+                else:
+                    return f"Erro após {max_tentativas} tentativas: {str(e)}"

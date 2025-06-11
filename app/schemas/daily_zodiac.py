@@ -14,6 +14,23 @@ class DailyZodiacSchemaBase(BaseModel):
     }
 
 
+    # deleta todos os registros de daily zodiac do usuário, pq ele mudou a data de nascimento então não é mais válido
+    @staticmethod
+    async def delete_daily_zodiac_by_user_id(session, user_id: int):
+        """
+        Deleta todas as entradas de daily zodiac do usuário.
+        """
+        try:
+            stmt = (
+                text("DELETE FROM daily_zodiac WHERE user = :user_id")
+                .bindparams(bindparam("user_id", type=Integer))
+            )
+            await session.execute(stmt, {"user_id": user_id})
+            await session.commit()
+        except Exception as e:
+            print(f"Erro ao deletar daily zodiac para o usuário {user_id}: {e}")
+            await session.rollback()
+
     @staticmethod
     async def get_daily_zodiac_by_user_id(session, user_id: int, count: int = 1):
         """

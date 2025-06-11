@@ -14,6 +14,7 @@ from app.schemas.personal_sign import PersonalSignSchema
 from app.schemas.zodiac import ZodiacSchemaBase
 from app.services.planet import  PlanetSignCalculator
 from app.services.descricao_astrologica import DescricaoAstrologicaService
+from app.schemas.daily_zodiac import DailyZodiacSchemaBase
 
 from app.services.zodiac import DailyZodiacService
 router = APIRouter()
@@ -62,8 +63,6 @@ async def put_birth_info(
     db: AsyncSession = Depends(get_session)
 ) -> Dict[str, Any]:
     try:
-        # print("Payload recebido:", payload)
-
         token_info: TokenInfoSchema = getattr(request.state, "token_info", None)
         if token_info is None:
             raise HTTPException(status_code=401, detail="Token ausente")
@@ -76,27 +75,22 @@ async def put_birth_info(
         if not userexists:
             raise HTTPException(status_code=400, detail="Usuário não encontrado")
 
-        # Atualiza dados de nascimento
-        await UserSchemaBase.atualizar_info_nascimento(db, user_id, payload.birth_date, payload.birth_time, payload.birth_place)
+        # Usa as informações de nascimento do corpo da requisição (payload)
+        await UserSchemaBase.atualizar_info_nascimento(
+            db, user_id, payload.birth_date, payload.birth_time, payload.birth_place
+        )
 
-        # Busca planetas disponíveis
-        all_planets = await PlanetSchemaBase.get_all_planet_ids_and_names( db)
+        all_planets = await PlanetSchemaBase.get_all_planet_ids_and_names(db)
         user_type_id = await UserSchemaBase.get_user_type_by_id(db, user_id)
         max_tokens = int(await UserTypeSchema.get_token_amount_by_id(db, user_type_id))
         allowed_planets = await UserTypeSchemaBase.get_planets_by_user_type_id(db, user_type_id)
-
-        
-        ## ele tem os aplentas
-
-        # Tokens disponíveis
-
 
         planet_results = []
 
         for planet in all_planets:
             planet_id = planet["id"]
             planet_name = planet["name"]
-            
+
             planet_sign_calculator = PlanetSignCalculator()
             signo, grau = await planet_sign_calculator.planet_sign(
                 payload.birth_date,
@@ -104,7 +98,8 @@ async def put_birth_info(
                 payload.birth_place,
                 planet_name.upper()
             )
-            # apartir daquii servico separado so para atualizar a descricao 
+            
+            
 
             acesso_premium = planet_id in allowed_planets
             descricao_service = DescricaoAstrologicaService()
@@ -123,14 +118,18 @@ async def put_birth_info(
             )
 
             planet_results.append(result)
-            
-        # agora cria a leitura diaria do usuario
+
         daily_zodiac_service = DailyZodiacService()
+        
+        
+        # tem que apagar todos os zodiacos diários do usuário antes de criar novos
         await daily_zodiac_service.create_daily_zodiac_for_user(
             db=db,
             user_id=user_id,
         )
-        
+        await DailyZodiacSchemaBase.delete_old_entries(session=db, user_id=user_id, count=1)
+
+
         return {
             "message": "Informações de nascimento atualizadas com sucesso.",
         }
