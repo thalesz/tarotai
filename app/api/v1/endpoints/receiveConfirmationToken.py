@@ -13,8 +13,6 @@ from app.services.email import EmailConfirmationSchema
 from app.services.token import TokenConfirmationSchema
 from app.services.subscription import Subscription
 
-import asyncio  # Import asyncio for async operations
-
 # Import DailyPathService for creating daily path
 from app.services.daily_path import DailyPathService
 
@@ -123,21 +121,15 @@ async def receive_confirmation_token_by_email(
         message = "Conta confirmada com sucesso! Agora você pode acessar todos os recursos da plataforma."
 
         # cria o daily path para o usuário
-         # Instanciando serviços
         daily_path_service = DailyPathService()
+        await daily_path_service.create_daily_path_for_user(user_id=user_id, db=db)
+        
         subscription_service = Subscription()
-
-        # Executando 3 tarefas em paralelo
-        daily_path_task = daily_path_service.create_daily_path_for_user(user_id=user_id, db=db)
-        subscription_task = subscription_service.create_daily_gift_for_user(user_id=user_id, db=db)
-        notification_task = NotificationSchema.create_notification(db, user_id, message)
-
-        daily_path_result, subscription_result, notification = await asyncio.gather(
-            daily_path_task,
-            subscription_task,
-            notification_task
+        
+        await subscription_service.create_daily_gift_for_user(
+            user_id=user_id, db=db
         )
-
+        notification = await NotificationSchema.create_notification(db, user_id, message)
         # Envia via WebSocket
         await ws_manager.send_notification(str(user_id), message, notification.id)
 
