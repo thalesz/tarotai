@@ -25,6 +25,68 @@ class UserSchemaBase(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = True
         
+    @staticmethod
+    async def get_user_password_by_id(
+        db: AsyncSession, user_id: int
+    ) -> str | None:
+        """
+        Obtém a senha do usuário pelo ID.
+        """
+        query = select(UserModel.password).where(UserModel.id == user_id)
+        result = await db.execute(query)
+        password = result.scalar_one_or_none()
+        return password if password else None
+        
+    @staticmethod
+    async def update_password(
+        db: AsyncSession, user_id: int, new_password: str
+    ) -> dict:
+        """
+        Atualiza a senha do usuário no banco de dados.
+        """
+        query = select(UserModel).where(UserModel.id == user_id)
+        result = await db.execute(query)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado",
+            )
+
+        # Atualiza a senha do usuário
+        user.password = pwd_context.hash(new_password)
+        db.add(user)
+        await db.commit()
+
+        return {"message": "Senha atualizada com sucesso"}
+        
+    @staticmethod
+    async def get_user_email_by_id(
+        db: AsyncSession, user_id: int
+    ) -> str | None:
+        """
+        Obtém o e-mail do usuário pelo ID.
+        """
+        query = select(UserModel.email).where(UserModel.id == user_id)
+        result = await db.execute(query)
+        email = result.scalar_one_or_none()
+        return email if email else None
+        
+    @staticmethod
+    async def get_id_by_login(
+        db: AsyncSession, login: str
+    ) -> int | None:
+        """
+        Obtém o ID do usuário pelo nome de usuário.
+        """
+        query = select(UserModel.id).where(
+            (UserModel.username == login) | (UserModel.email == login)
+        )
+        result = await db.execute(query)
+        user = result.scalar_one_or_none()
+        return user if user else None
+
     async def get_birth_info_by_id(
         db: AsyncSession, user_id: int
     ) -> dict:
@@ -248,9 +310,9 @@ class UserSchemaBase(BaseModel):
         return user.status
 
     # Busca o usuário associado ao refresh token no banco de dados
-    @classmethod
+    @staticmethod
     async def get_user_by_refresh_token(
-        cls, db: AsyncSession, refresh_token: str
+         db: AsyncSession, refresh_token: str
     ) -> UserModel:
         query = select(UserModel).where(UserModel.refresh_token.any(refresh_token))
         result = await db.execute(query)
@@ -440,9 +502,10 @@ class UserSchemaLogin(UserSchemaBase):
         Verifica se a senha fornecida corresponde à senha hash armazenada.
         """
         return pwd_context.verify(self.password, hashed_password)
-
-    @classmethod
-    async def authenticate_user(cls, db, login: str, password: str) -> "UserSchema":
+    
+    
+    @staticmethod
+    async def authenticate_user(db, login: str, password: str) -> "UserSchema":
         """
         Realiza a autenticação do usuário verificando as credenciais (usuário/email e senha).
         Retorna uma instância de UserSchema.

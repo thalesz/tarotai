@@ -36,7 +36,10 @@ from app.api.v1.endpoints import (
     getAllPlanet,
     getSignByPlanet,
     getLastZodiacDaily,
-    getLastDailyPath
+    getLastDailyPath,
+    sendPasswordToken,
+    receivePasswordToken,
+    getReviewByDraw
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -66,6 +69,10 @@ api_router.include_router(register_adm_router)
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(refresh.router, prefix="/refresh", tags=["refresh"])
 api_router.include_router(logout.router, prefix="/logout", tags=["logout"])
+api_router.include_router(sendPasswordToken.router, prefix="/password", tags=["password"])
+api_router.include_router(
+    receivePasswordToken.router, prefix="/password", tags=["password"]
+)
 # não precisa estar logado por motivos de vai acessar o link com o token de confirmação
 # e o token de confirmação vai ser enviado para o email do usuário
 api_router.include_router(
@@ -174,7 +181,9 @@ active_router.include_router(
 active_router.include_router(
     getLastDailyPath.router, prefix="/daily-path", tags=["daily-path"]
 )
-    
+active_router.include_router(
+    getReviewByDraw.router, prefix="/review", tags=["review"]
+)   
 
 api_router.include_router(active_router)
 

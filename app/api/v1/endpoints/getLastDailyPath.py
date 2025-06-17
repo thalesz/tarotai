@@ -119,7 +119,7 @@ async def get_daily_zodiac(
             )
 
         reading = JsonExtractor.extract_json_from_reading(daily_path.reading)
-        return JSONResponse(content={"horoscopo": reading}, status_code=200)
+        return JSONResponse(content={"daily": reading}, status_code=200)
 
 
     except SQLAlchemyError as e:

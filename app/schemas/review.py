@@ -15,6 +15,30 @@ class ReviewSchemaBase(BaseModel):
     }
     
     @staticmethod
+    async def get_review_by_draw(
+        session: AsyncSession,
+        draw_id: int,
+        user_id: int | None = None
+    ) -> list['ReviewSchema']:
+        """
+        Retrieve all reviews for a specific draw.
+        """
+        if user_id is not None:
+            query = select(ReviewModel).where(
+            (ReviewModel.draw_id == draw_id) & (ReviewModel.user == user_id)
+            )
+        else:
+            query = select(ReviewModel).where(ReviewModel.draw_id == draw_id)
+
+        result = await session.execute(query)
+        reviews = result.scalars().all()
+
+        if reviews:
+            return [ReviewSchema.model_validate(review) for review in reviews]
+
+        return []
+    
+    @staticmethod
     async def get_rating_and_comment_by_draw_id(
         session: AsyncSession,
         draw_id: int

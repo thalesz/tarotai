@@ -92,8 +92,10 @@ async def get_all_decks(
             session=db, user_id=user_id, spread_type_id=spread_type.id
             )
             result.append({
-            "spread_type_id": spread_type.id,
-            "spread_type_name": spread_type.name,
+            "id": spread_type.id,
+            "name": spread_type.name,
+            "description": spread_type.description,
+            "card_count": spread_type.card_count,
             "available_draws_count": count
             })
         

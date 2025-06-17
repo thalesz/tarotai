@@ -47,6 +47,48 @@ class EmailConfirmationSchema(EmailSchemaBase):
             recipient=recipient,
             sender=settings.SMTP_USERNAME,
         )
+    
+    @staticmethod
+    async def send_reset_confirmation_email(email: str) -> EmailSchemaBase:
+        subject = "Tarot - Senha Alterada com Sucesso"
+        body = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                <h2 style="color: #4CAF50; text-align: center;">Senha Alterada com Sucesso</h2>
+                <p>Olá,</p>
+                <p>Sua senha foi alterada com sucesso. Se você não realizou esta alteração, por favor, entre em contato com o suporte imediatamente.</p>
+                <p>Atenciosamente,<br>Equipe de Suporte</p>
+            </div>
+            </body>
+        </html>
+        """
+        return EmailConfirmationSchema._send_email(subject, body, email)
+    
+    @staticmethod
+    async def send_reset_email(email: str, token: str) -> EmailSchemaBase:
+        subject = "Tarot - Redefinição de Senha - Ação Necessária"
+        body = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                <h2 style="color: #4CAF50; text-align: center;">Redefinição de Senha</h2>
+                <p>Olá,</p>
+                <p>Recebemos uma solicitação para redefinir sua senha. Para continuar, clique no botão abaixo:</p>
+                <div style="text-align: center; margin: 20px 0;">
+                <form action="https://tarotserver-fhe9fngmfxewepf5.westus-01.azurewebsites.net/api/v1/reset-password/receive/{token}" style="display: inline-block;">
+                    <button type="submit" style="padding: 10px 20px; font-size: 16px; color: #fff; background-color: #4CAF50; border: none; border-radius: 5px; cursor: pointer;">
+                    Redefinir Senha
+                    </button>
+                </form>
+                </div>
+                <p>Se você não solicitou esta redefinição, por favor, ignore este email.</p>
+                <p>Atenciosamente,<br>Equipe de Suporte</p>
+            </div>
+            </body>
+        </html>
+        """
+        return EmailConfirmationSchema._send_email(subject, body, email)
 
     @staticmethod
     async def send_confirmation_email(email: str, token: str) -> EmailSchemaBase:

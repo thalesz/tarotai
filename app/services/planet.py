@@ -86,7 +86,7 @@ class PlanetSignCalculator:
         return ecliptic[1].degrees
 
 
-    @classmethod
-    def _sign_from_degree(cls, degree: float) -> str:
+    @staticmethod
+    def _sign_from_degree( degree: float) -> str:
         """Mapeia 0-360° para o nome do signo."""
-        return cls._ZODIAC_SIGNS[int(degree // 30) % 12]
+        return PlanetSignCalculator._ZODIAC_SIGNS[int(degree // 30) % 12]

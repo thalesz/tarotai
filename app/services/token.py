@@ -18,9 +18,9 @@ class TokenSchemaBase(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = True
 
-    @classmethod
+    @staticmethod
     def create_token(
-        cls, data: dict, secret_key: str, expires_delta: timedelta = None
+         data: dict, secret_key: str, expires_delta: timedelta = None
     ) -> str:
         try:
             to_encode = data.copy()
@@ -43,6 +43,7 @@ class TokenSchemaBase(BaseModel):
         Decodifica um token JWT e retorna os dados contidos nele.
         """
         try:
+            print(f"Decoding token: {token}")
             payload = jwt.decode(token, secret_key, algorithms=[algorithm])
             return payload
         except jwt.ExpiredSignatureError as e:
@@ -54,6 +55,12 @@ class TokenSchemaBase(BaseModel):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Token inválido: {str(e)}",
+            )
+        except Exception as e:
+            print(f"Error decoding token: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao decodificar token: {str(e)}",
             )
 
     # @staticmethod
@@ -117,9 +124,9 @@ class TokenInfoSchema(TokenSchemaBase):
 class TokenRefreshSchema(TokenSchemaBase):
     refresh_token: str
 
-    @classmethod
+    @staticmethod
     async def update_refresh_token(
-        cls, db: AsyncSession, user_id: str, refresh_token: str
+        db: AsyncSession, user_id: str, refresh_token: str
     ) -> None:
         try:
             query = select(UserModel).where(UserModel.id == user_id)

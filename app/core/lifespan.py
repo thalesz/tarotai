@@ -75,12 +75,12 @@ async def lifespan(app: FastAPI):
     )
     
     # Agenda a tarefa para rodar daqui a 30 segundos a partir de agora
-    run_in_30_seconds = (datetime.datetime.now() + datetime.timedelta(seconds=30)).time()
-    provide_daily_path = DailyScheduler(
-        scheduled_time=run_in_30_seconds,
-        functions=[DailyPathService().create_daily_path_for_all_users]
-    )
-    asyncio.create_task(provide_daily_path.start())
+    # run_in_30_seconds = (datetime.datetime.now() + datetime.timedelta(seconds=30)).time()
+    # provide_daily_path = DailyScheduler(
+    #     scheduled_time=run_in_30_seconds,
+    #     functions=[DailyPathService().create_daily_path_for_all_users]
+    # )
+    # asyncio.create_task(provide_daily_path.start())
     asyncio.create_task(provide_daily_gifts.start())
     asyncio.create_task(provide_daily_horoscope.start())
 

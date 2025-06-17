@@ -106,7 +106,7 @@ async def login(user_data: UserSchemaLogin, db: AsyncSession = Depends(get_sessi
             secret_key=settings.REFRESH_SECRET_KEY,
             expires_delta=timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
         )
-        # print("refresh_token", refresh_token)
+        print("refresh_token", refresh_token)
 
         # Atualiza o refresh_token no banco de dados
         await TokenRefreshSchema.update_refresh_token(
