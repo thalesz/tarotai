@@ -9,6 +9,7 @@ from app.schemas.user import UserSchemaBase
 from app.core.configs import settings
 from app.services.email import EmailConfirmationSchema
 from app.services.token import TokenConfirmationSchema
+from app.schemas.token_blacklist import TokenBlacklistSchema
 from app.core.security import pwd_context
 
 router = APIRouter()
@@ -133,6 +134,8 @@ async def receive_confirmation_token_by_email(
             )
 
         try:
+            
+            
             token_info: TokenConfirmationSchema = TokenConfirmationSchema.decode_token(
                 token=token,
                 secret_key=settings.RESET_PASSWORD_SECRET_KEY,
@@ -150,7 +153,17 @@ async def receive_confirmation_token_by_email(
                 status_code=400,
                 content={"error": "ID do usuário não encontrado no token.", "status_code": 400}
             )
-
+        # Verifica se o token está na blacklist
+        is_blacklisted = await TokenBlacklistSchema.verify_token(
+            session=db,
+            token=token,
+        )
+        if is_blacklisted:
+            return JSONResponse(
+                status_code=401,
+                content={"error": "Token já usado anteriormente.", "status_code": 401}
+            )
+        
         existing_password = await UserSchemaBase.get_user_password_by_id(user_id=user_id, db=db)
         if existing_password and pwd_context.verify(new_password, existing_password):
             return JSONResponse(
@@ -173,6 +186,13 @@ async def receive_confirmation_token_by_email(
             )
 
         await EmailConfirmationSchema.send_reset_confirmation_email(email=user_email)
+
+        # Invalida o token após o uso (exemplo: adicionando a um blacklist ou marcando como usado)
+        await TokenBlacklistSchema.add_token_to_blacklist(
+            session=db,
+            token=token,
+            user_id=user_id
+        )
 
         return {"message": "Senha alterada com sucesso. Um e-mail de confirmação foi enviado."}
     except Exception as e:

@@ -25,6 +25,36 @@ class UserSchemaBase(BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = True
         
+        
+    @staticmethod
+    async def get_all_users(db: AsyncSession) -> list[dict]:
+        """
+        Obtém todos os usuários do banco de dados.
+        """
+        query = select(UserModel)
+        result = await db.execute(query)
+        users = result.scalars().all()
+
+        if not users:
+            return []
+
+        return [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "status": user.status,
+                "user_type": user.user_type,
+                "full_name": user.full_name,
+                "birth_date": user.birth_date,
+                "birth_time": user.birth_time,
+                "birth_place": user.birth_place,
+                "created_at": user.created_at.isoformat(),
+                
+            }
+            for user in users
+        ]
+        
     @staticmethod
     async def get_user_password_by_id(
         db: AsyncSession, user_id: int

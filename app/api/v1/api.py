@@ -39,7 +39,8 @@ from app.api.v1.endpoints import (
     getLastDailyPath,
     sendPasswordToken,
     receivePasswordToken,
-    getReviewByDraw
+    getReviewByDraw,
+    getAllUsers
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -84,6 +85,8 @@ api_router.include_router(websocket.router, prefix="/ws", tags=["websocket"])
 # Tem que ter o jwt para acessar as rotas abaixo
 protected_router = APIRouter(dependencies=[Depends(verify_jwt)])
 protected_router.include_router(testjwt.router, prefix="/test", tags=["test"])
+
+protected_router.include_router(getAllUsers.router, prefix="/user", tags=["user"])
 
 api_router.include_router(protected_router)
 # enviar email de verificação de conta - precisa estar logado e ter o status de "pending_confirmation"
@@ -184,6 +187,8 @@ active_router.include_router(
 active_router.include_router(
     getReviewByDraw.router, prefix="/review", tags=["review"]
 )   
+
+
 
 api_router.include_router(active_router)
 

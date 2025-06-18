@@ -77,6 +77,7 @@ class TokenSchemaBase(BaseModel):
     #         return TokenConfirmationSchema(confirmation_token=token)
     #     else:
     #         raise ValueError("Invalid token type")
+    
 
     @staticmethod
     def verify_token(token: str) -> str:
