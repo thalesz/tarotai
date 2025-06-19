@@ -257,7 +257,7 @@ async def update_draw(
             f"Os tópicos disponíveis são: {topic_name}.\n"
             f"Analise o contexto e retorne todos os tópicos que se encaixam, no formato ['topic1', 'topic2', ...].\n"
             f"O formato deve ser exatamente o seguinte: ['topic1', 'topic2', ...].\n"
-            f"Se não houver tópicos correspondentes, retorne uma lista vazia [].\n"
+            f"Se não houver tópicos correspondentes, retorne uma lista vazia []. Mande no máximo tres topicos, não ultrapasse.\n"
             f"O formato deve ser respeitado, pois o restante da API depende disso.\n"
         )
         
@@ -426,7 +426,7 @@ async def update_draw(
                 f"O resultado **deve** ser retornado no seguinte formato de dicionário JSON VÁLIDO (com aspas duplas):\n"
                 f"```json\n{{\"introducao\": \"...\", \"carta_1\": \"...\", \"carta_2\": \"...\", ..., \"conclusao\": \"...\"}}\n```\n\n"
                 f"> ⚠️ **É EXTREMAMENTE IMPORTANTE que o formato seja seguido com exatidão, usando aspas duplas em todas as chaves e valores, pois a API depende disso.**\n\n"
-                f"Se a tiragem tiver aspectos negativos, forneça uma análise honesta e construtiva. "
+                f"Se a tiragem tiver aspectos negativos, forneça uma análise realista e honesta."
                 f"Todas as cartas fornecidas devem ser interpretadas, sem exceção."
             )
         else:

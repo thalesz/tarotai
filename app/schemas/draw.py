@@ -13,6 +13,20 @@ class DrawSchemaBase(BaseModel):
         arbitrary_types_allowed = True  # Allows arbitrary types like SQLAlchemy's DateTime
         validate_assignment = True
         
+        
+    @staticmethod
+    async def get_user_contexts(
+        session, user_id: int, count: int = 10
+    ) -> list[str]:
+        """
+        Get the most recent `count` contexts given by the user.
+        """
+        query = text(
+            "SELECT context FROM draws WHERE user_id = :user_id ORDER BY created_at DESC LIMIT :count"
+        )
+        result = await session.execute(query, {"user_id": user_id, "count": count})
+        rows = result.fetchall()
+        return [row.context for row in rows] if rows else []
     @staticmethod
     async def get_draw_details_by_id(
         session, draw_id: int

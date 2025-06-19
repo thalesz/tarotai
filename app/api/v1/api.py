@@ -40,7 +40,9 @@ from app.api.v1.endpoints import (
     sendPasswordToken,
     receivePasswordToken,
     getReviewByDraw,
-    getAllUsers
+    getAllUsers,
+    getInfoUser,
+    getFiveRecomendations
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -188,7 +190,9 @@ active_router.include_router(
     getReviewByDraw.router, prefix="/review", tags=["review"]
 )   
 
-
+active_router.include_router(
+    getFiveRecomendations.router, prefix="/questions", tags=["questions"]
+)
 
 api_router.include_router(active_router)
 
@@ -231,5 +235,9 @@ active_and_pending_router.include_router(
 
 active_and_pending_router.include_router(
     getAllNotification.router, prefix="/notification", tags=["notification"]
+)
+
+active_and_pending_router.include_router(
+    getInfoUser.router, prefix="/user", tags=["user"]
 )
 api_router.include_router(active_and_pending_router)
