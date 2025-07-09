@@ -73,7 +73,7 @@ api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(refresh.router, prefix="/refresh", tags=["refresh"])
 api_router.include_router(logout.router, prefix="/logout", tags=["logout"])
 api_router.include_router(sendPasswordToken.router, prefix="/password", tags=["password"])
-api_router.include_rnouter(
+api_router.include_router(
     receivePasswordToken.router, prefix="/password", tags=["password"]
 )
 # não precisa estar logado por motivos de vai acessar o link com o token de confirmação
