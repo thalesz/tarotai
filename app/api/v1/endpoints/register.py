@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_session
 from app.schemas.user import UserSchema, UserSchemaRegister
+from app.schemas.mission import MissionSchemaBase
+from app.schemas.mission_type import  MissionTypeSchemaBase  # Add this import, adjust the path if needed
 
 router = APIRouter()
 
@@ -84,4 +86,15 @@ async def register_user(
     - **full_name**: Nome completo do usuário (3 a 100 caracteres).
     """
     response = await UserSchemaRegister.create_user(db=db, user_data=user_data)
+    
+    print(f"Usuário registrado: {response}")
+    mission_type_id_consultar = await MissionTypeSchemaBase.get_id_by_name(db, "Confirmar conta de usuário")
+
+    await MissionSchemaBase.create_mission(db, mission_type_id_consultar, response['id'])
+
+    mission_type_id_adicionar = await MissionTypeSchemaBase.get_id_by_name(db, "Adicionar informações de nascimento")
+
+    await MissionSchemaBase.create_mission(db, mission_type_id_adicionar, response['id'])
+
+
     return response

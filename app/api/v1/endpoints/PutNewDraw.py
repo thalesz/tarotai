@@ -18,6 +18,8 @@ from app.schemas.topic import TopicSchema  # Import TopicSchema
 from app.schemas.status import StatusSchema  # Import StatusSchema
 from app.schemas.reading_style import ReadingStyleSchema # Import ReadingStyleSchema
 from app.schemas.review import ReviewSchema  # Import ReviewSchema
+from app.schemas.mission_type import MissionTypeSchemaBase  # Import MissionTypeSchemaBase
+from app.services.confirmMissionService import ConfirmMissionService
 
 from app.services.extract import JsonExtractor  # Import JsonExtractor
 
@@ -402,6 +404,9 @@ async def update_draw(
 
         # pega o nome do usuario
         user_name = await UserSchemaBase.get_user_name_by_id(db, user_id)
+        
+        mandala_id = await SpreadTypeSchema.get_id_by_name(db, "Mandala Astrológica")
+
 
         # Monta o prompt ajustado incluindo o contexto anterior, se houver
         if preview_context:
@@ -480,6 +485,25 @@ async def update_draw(
         )
 
         reading = JsonExtractor.extract_json_from_reading(reading)
+        confirm_service = ConfirmMissionService()
+
+        # se for do tipo mandala astrológica, tem que confirmar a missão do usuário
+        if draw_data.spread_type_id == mandala_id:  # Mandala Astrológica
+            
+            mission_type_id = await MissionTypeSchemaBase.get_id_by_name(db, "Fazer uma leitura do tipo Mandala Astrológica")
+            await confirm_service.confirm_mission(db,  mission_type_id, user_id)
+        
+        id_analitico = await ReadingStyleSchema.get_id_by_name(db, "Analítico")
+        
+        if draw_data.reading_style == id_analitico:
+            # se for do tipo analítico, tem que confirmar a missão do usuário
+            
+            print("Fazer uma leitura no modo analitico")
+            mission_type_id = await MissionTypeSchemaBase.get_id_by_name(db, "Fazer uma leitura no modo analítico")
+            await confirm_service.confirm_mission(db,  mission_type_id, user_id)
+            
+        
+        
         return {"leitura": reading}
     except HTTPException as e:
         raise e

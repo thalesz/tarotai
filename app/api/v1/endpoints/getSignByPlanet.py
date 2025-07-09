@@ -9,7 +9,9 @@ from app.schemas.personal_sign import PersonalSignSchemaBase  # Import PersonalS
 from app.schemas.zodiac import ZodiacSchemaBase  # Import ZodiacSignSchemaBase
 from app.schemas.user_type import UserTypeSchemaBase, UserTypeSchema  # Import UserTypeSchemaBase and UserTypeSchema
 from app.schemas.planet import PlanetSchemaBase  # Import PlanetSchemaBase
+from app.schemas.mission_type import MissionTypeSchemaBase  # Import MissionTypeSchemaBase
 from app.services.openai import OpenAIService
+from app.services.confirmMissionService import ConfirmMissionService  # Import ConfirmMissionService
 
 
 router = APIRouter()
@@ -120,6 +122,16 @@ async def get_all_planets(
             } for s in sign
         ] if sign else []
         #convert to a list of dictionaries
+        
+        # verifica se a pessoa usou o sol natal
+        
+        if planet_name == "Sun":
+            confirm_service = ConfirmMissionService()
+            mission_type_id = await MissionTypeSchemaBase.get_id_by_name(db, "Consultar o seu sol natal")
+            await confirm_service.confirm_mission(db,  mission_type_id, user_id)
+            
+            
+        
         return {"sign": sign} if sign else {"sign": []}
     except HTTPException as e:
         return {"error": e.detail}

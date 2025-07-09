@@ -8,6 +8,9 @@ from app.services.token import TokenInfoSchema
 from app.schemas.user import UserSchemaBase
 from app.schemas.draw import DrawSchemaBase
 from app.schemas.review import ReviewSchemaBase
+from app.services.confirmMissionService import ConfirmMissionService    
+from app.basic.mission_type import mission_types
+from app.schemas.mission_type import MissionTypeSchemaBase
 
 router = APIRouter()
 
@@ -85,6 +88,19 @@ async def put_new_review(
             draw_id=payload.draw,
             rating=payload.rating,
             comment=payload.comment
+        )
+        
+        
+        mission_type_id = await MissionTypeSchemaBase.get_id_by_name(
+            db=db,
+            name="Avaliar uma tiragem gerada pela IA"
+        )
+        
+        confirm_mission = ConfirmMissionService()
+        await confirm_mission.confirm_mission(
+            db=db,
+            mission_type_id=mission_type_id,  # "Abrir um biscoito da sorte" é o segundo item,
+            user_id=user_id,
         )
 
         return {

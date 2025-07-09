@@ -20,6 +20,21 @@ class MissionTypeSchemaBase(BaseModel):
         validate_assignment = True
         
     
+    @staticmethod
+    async def get_id_by_name(
+        db: AsyncSession, name: str
+    ) -> int | None:
+        """ Retorna o ID do tipo de missão pelo nome.
+        """
+        try:
+            result = await db.execute(
+                select(MissionTypeModel.id).where(MissionTypeModel.name == name)
+            )
+            row = result.scalar_one_or_none()
+            return row if row is not None else None
+        except Exception as e:
+            print(f"Erro ao buscar ID pelo nome: {e}")
+            return None
     
     @staticmethod
     async def get_status_by_id(
@@ -77,18 +92,16 @@ class MissionTypeSchemaBase(BaseModel):
     async def get_expired_date_by_id(
         db: AsyncSession, mission_type_id: int
     ) -> datetime | None:
-        """ Retorna a data de expiração do tipo de missão pelo ID.
-        """
+        """ Retorna a data de expiração do tipo de missão pelo ID. Se não houver, retorna None. """
         try:
             result = await db.execute(
                 select(MissionTypeModel.expiration_date).where(MissionTypeModel.id == mission_type_id)
             )
             row = result.scalar_one_or_none()
-            return row if row else None
+            return row
         except Exception as e:
             print(f"Erro ao buscar expiration_date: {e}")
             return None
-        
     @staticmethod
     async def get_auto_renew_by_id(
         db: AsyncSession, mission_type_id: int

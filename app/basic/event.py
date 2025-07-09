@@ -91,7 +91,7 @@ event = [
         "start_date": "2025-10-01T00:00:00",
         "expired_date": "2026-10-31T00:00:00",
         "gift": [1, 2, 3, 4, 5, 6],
-        "user_type": [187],
+        "user_type": [1, 987, 187],
         "recurrence_type": 5,  # Recorrência baseada no usuário
         "recurrence_mode": 2,  # Modo de recorrência baseado no usuário
         "auto_renew": False,  # Evento renovável automaticamente

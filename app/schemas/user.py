@@ -504,6 +504,7 @@ class UserSchemaBase(BaseModel):
             )
 
         return {
+            "id": new_user.id,
             "username": new_user.username,
             "email": new_user.email,
             "user_type": new_user.user_type,

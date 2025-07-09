@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_session
 from app.schemas.user import UserSchema, UserSchemaRegister, UserSchemaRegisterClient
+from app.schemas.mission import MissionSchemaBase
+from app.schemas.mission_type import MissionTypeSchemaBase  # Importar o esquema de tipo de missão
 
 router = APIRouter()
 
@@ -84,8 +86,20 @@ async def register_user(
     try:
         # Adiciona o user_type diretamente ao criar o user_data_with_type
         user_data_with_type = UserSchemaRegister(**user_data.model_dump(), user_type=1)
-        response = await UserSchemaRegister.create_user(db=db, user_data=user_data_with_type)
+        response = await UserSchemaRegister.create_user(db=db, user_data=user_data)
+    
+        print(f"Usuário registrado: {response}")
+        mission_type_id_consultar = await MissionTypeSchemaBase.get_id_by_name(db, "Confirmar conta de usuário")
+
+        await MissionSchemaBase.create_mission(db, mission_type_id_consultar, response['id'])
+
+        mission_type_id_adicionar = await MissionTypeSchemaBase.get_id_by_name(db, "Adicionar informações de nascimento")
+
+        await MissionSchemaBase.create_mission(db, mission_type_id_adicionar, response['id'])
+
+
         return response
+
     except Exception as e:
         # Retorna a mesma exceção que ocorreu
         raise e

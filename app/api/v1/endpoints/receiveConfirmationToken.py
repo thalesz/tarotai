@@ -16,6 +16,10 @@ from app.services.subscription import Subscription
 # Import DailyPathService for creating daily path
 from app.services.daily_path import DailyPathService
 
+# Import ConfirmMissionService for mission confirmation
+from app.services.confirmMissionService import ConfirmMissionService
+from app.schemas.mission_type import MissionTypeSchemaBase  # Import MissionTypeSchemaBase
+
 # Import ws_manager from its module (update the import path as needed)
 from app.services.websocket import ws_manager
 from app.services.subscription import Subscription
@@ -129,9 +133,17 @@ async def receive_confirmation_token_by_email(
         await subscription_service.create_daily_gift_for_user(
             user_id=user_id, db=db
         )
-        notification = await NotificationSchema.create_notification(db, user_id, message)
-        # Envia via WebSocket
-        await ws_manager.send_notification(str(user_id), message, notification.id)
+        
+        # cumpre a missão 
+        
+        confirm_service = ConfirmMissionService()
+        mission_type_id = await MissionTypeSchemaBase.get_id_by_name(db, "Confirmar conta de usuário")
+        await confirm_service.confirm_mission(db,  mission_type_id, user_id)
+        
+        
+        # notification = await NotificationSchema.create_notification(db, user_id, message)
+        # # Envia via WebSocket
+        # await ws_manager.send_notification(str(user_id), message, notification.id)
 
         return HTMLResponse(
             content=f"""

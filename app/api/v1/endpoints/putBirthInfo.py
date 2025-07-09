@@ -16,6 +16,9 @@ from app.services.planet import  PlanetSignCalculator
 from app.services.descricao_astrologica import DescricaoAstrologicaService
 from app.schemas.daily_zodiac import DailyZodiacSchemaBase
 
+from app.services.confirmMissionService import ConfirmMissionService
+from app.schemas.mission_type import MissionTypeSchemaBase  # Import MissionTypeSchemaBase
+
 from app.services.zodiac import DailyZodiacService
 router = APIRouter()
 
@@ -128,6 +131,10 @@ async def put_birth_info(
             user_id=user_id,
         )
         await DailyZodiacSchemaBase.delete_old_entries(session=db, user_id=user_id, count=1)
+        
+        confirm_service = ConfirmMissionService()
+        mission_type_id = await MissionTypeSchemaBase.get_id_by_name(db, "Adicionar informações de nascimento")
+        await confirm_service.confirm_mission(db,  mission_type_id, user_id)
 
 
         return {

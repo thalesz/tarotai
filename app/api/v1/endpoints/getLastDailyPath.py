@@ -21,6 +21,8 @@ from app.schemas.daily_zodiac import DailyZodiacSchemaBase  # Import DailyZodiac
 from app.schemas.daily_path import DailyPathSchemaBase  # Import DailyPathSchemaBase
 
 from app.services.extract import JsonExtractor  # Import JsonExtractor
+from app.services.confirmMissionService import ConfirmMissionService
+from app.schemas.mission_type import MissionTypeSchemaBase  # Import MissionTypeSchemaBase
 
 router = APIRouter()
 
@@ -118,6 +120,11 @@ async def get_daily_zodiac(
                 detail="Caminho diario não encontrado para o usuário."
             )
 
+
+        confirm_service = ConfirmMissionService()
+        mission_type_id = await MissionTypeSchemaBase.get_id_by_name(db, "Abrir o caminho diário")
+        await confirm_service.confirm_mission(db,  mission_type_id, user_id)
+        
         reading = JsonExtractor.extract_json_from_reading(daily_path.reading)
         return JSONResponse(content={"daily": reading}, status_code=200)
 

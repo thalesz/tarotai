@@ -31,7 +31,7 @@ mission_types = [
     },
     {
         "id": 2,
-        "name": "Avaliar uma tiragem gerada pela IA",
+        "name": "Avaliar uma tiragem",
         "description": "Avaliar a precisão e utilidade de uma tiragem feita pela IA.",
         "status": 2,
         "recurrence_type": 2,  # WEEKLY
@@ -45,8 +45,8 @@ mission_types = [
     },
     {
         "id": 8,
-        "name": "Fazer uma leitura no oraculo semanal",
-        "description": "Realizar uma leitura semanal no oráculo para obter orientações.",
+        "name": "Fazer uma leitura do tipo Mandala Astrológica",
+        "description": "Realizar uma leitura do tipo Mandala Astrológica, que envolve 12 cartas associadas às casas do zodíaco.",
         "status": 2,
         "recurrence_type": 2,  # WEEKLY
         "recurrence_mode": 1,  # CALENDAR
@@ -59,8 +59,8 @@ mission_types = [
     },
     {
         "id": 3,
-        "name": "Enviar feedback detalhado",
-        "description": "Escrever e enviar um feedback detalhado sobre sua experiência.",
+        "name": "Fazer uma leitura no modo analítico",
+        "description": "Realizar uma leitura no modo analítico, que envolve uma análise detalhada de uma tiragem.",
         "status": 2,
         "recurrence_type": 3,  # MONTHLY
         "recurrence_mode": 1,  # CALENDAR
@@ -73,8 +73,8 @@ mission_types = [
     },
     {
         "id": 4,
-        "name": "Evento especial anual",
-        "description": "Participar de um evento comemorativo que ocorre uma vez por ano.",
+        "name": "Consultar o seu sol natal",
+        "description": "Consultar o seu sol natal para obter insights astrológicos.",
         "status": 2,
         "recurrence_type": 4,  # YEARLY
         "recurrence_mode": 1,  # CALENDAR
@@ -87,13 +87,27 @@ mission_types = [
     },
     {
         "id": 5,
-        "name": "Criar uma nova pergunta para a IA responder",
-        "description": "Escrever uma pergunta original e solicitar uma tiragem da IA com base nela.",
+        "name": "Confirmar conta de usuário",
+        "description": "Confirmar a conta de usuário para desbloquear recursos adicionais.",
         "status": 2,
         "recurrence_type": 5,  # ONCE
         "recurrence_mode": 2,  # USER_BASED
         "reset_time": "00:00:00",
-        "expiration_date": "2025-05-30T00:00:00",
+        "expiration_date": "2026-05-30T00:00:00",
+        "relative_days": 10,
+        "auto_renew": False,
+        "start_date": "2026-05-27T00:00:00",
+        "created_at": "2024-01-01T00:00:00"
+    },
+    {
+        "id": 9,
+        "name": "Adicionar informações de nascimento",
+        "description": "Adicionar informações de nascimento para personalizar leituras astrológicas. ",
+        "status": 2,
+        "recurrence_type": 5,  # ONCE
+        "recurrence_mode": 2,  # USER_BASED
+        "reset_time": "00:00:00",
+        "expiration_date": "2026-05-30T00:00:00",
         "relative_days": 10,
         "auto_renew": False,
         "start_date": "2026-05-27T00:00:00",
@@ -101,13 +115,13 @@ mission_types = [
     },
     {
         "id": 6,
-        "name": "Evento de boas vindas",
-        "description": "Entrar em um sorteio para ganhar prêmios.",
+        "name": "Abrir o caminho diário",
+        "description": "Abrir o caminho diário para receber uma mensagem especial.",
         "status": 2,
         "recurrence_type": 5,  # ONCE
         "recurrence_mode": 3,  # BY_EXPIRATION_DATE
         "reset_time": "00:00:00",
-        "expiration_date": "2025-05-30T23:59:59",
+        "expiration_date": "2026-05-30T23:59:59",
         "relative_days": None,
         "auto_renew": False,
         "start_date": "2025-05-25T00:00:00",

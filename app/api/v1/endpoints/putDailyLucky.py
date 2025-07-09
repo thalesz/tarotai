@@ -13,6 +13,8 @@ from app.schemas.user_type import UserTypeSchema
 from app.services.openai import OpenAIService
 from app.services.extract import JsonExtractor  # Import JsonExtractor
 
+from app.services.confirmMissionService import ConfirmMissionService
+from app.basic.mission_type import mission_types
 router = APIRouter()
 
 @router.put(
@@ -138,6 +140,15 @@ async def put_new_daily_lucky(
         reading = JsonExtractor.extract_json_from_reading(reading)
 
         print(f"Leitura extraída: {reading}")
+        
+        
+        confirm_mission = ConfirmMissionService()
+        await confirm_mission.confirm_mission(
+            db=session,
+            mission_type_id=mission_types[1]["id"],  # "Abrir um biscoito da sorte" é o segundo item,
+            user_id=user_id,
+        )
+        
         return {
             "leitura": reading,
         }

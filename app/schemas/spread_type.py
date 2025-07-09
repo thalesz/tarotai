@@ -15,6 +15,22 @@ class SpreadTypeSchemaBase(BaseModel):
         validate_assignment = True
         
     @staticmethod
+    async def get_id_by_name(
+        session: AsyncSession, spread_type_name: str
+    ) -> int | None:
+        """
+        Get the ID of a spread type by its name.
+        """
+        query = select(SpreadTypeModel.id).where(SpreadTypeModel.name == spread_type_name)
+        result = await session.execute(query)
+        spread_type_id = result.scalar_one_or_none()
+
+        if spread_type_id is None:
+            raise ValueError(f"Spread type '{spread_type_name}' does not exist.")
+
+        return spread_type_id
+        
+    @staticmethod
     async def get_spread_type_name_by_id(
         session: AsyncSession, spread_type_id: int
     ) -> str | None:

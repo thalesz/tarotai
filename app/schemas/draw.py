@@ -27,6 +27,7 @@ class DrawSchemaBase(BaseModel):
         result = await session.execute(query, {"user_id": user_id, "count": count})
         rows = result.fetchall()
         return [row.context for row in rows] if rows else []
+    
     @staticmethod
     async def get_draw_details_by_id(
         session, draw_id: int

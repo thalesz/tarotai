@@ -13,6 +13,17 @@ class ReadingStyleSchemaBase(BaseModel):
             True  # Allows arbitrary types like SQLAlchemy's DateTime
         )
         validate_assignment = True
+        
+    @staticmethod
+    async def get_id_by_name(session: AsyncSession, reading_style_name: str) -> int:
+        """
+        Retrieve the ID of a reading style by its name.
+        """
+        result = await session.execute(
+            select(ReadingStyleModel.id).where(ReadingStyleModel.name == reading_style_name)
+        )
+        reading_style_id = result.scalars().first()
+        return reading_style_id if reading_style_id else None
 
     @staticmethod
     async def get_reading_style_description_by_id(
