@@ -586,8 +586,6 @@ class UserSchemaLogin(UserSchemaBase):
                 detail="Erro interno do servidor",
             ) from e
 
-
-
 class UserSchemaRegisterClient(UserSchemaBase):
     """
     Schema para o registro de um novo usuário.

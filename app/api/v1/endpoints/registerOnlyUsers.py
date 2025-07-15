@@ -86,7 +86,7 @@ async def register_user(
     try:
         # Adiciona o user_type diretamente ao criar o user_data_with_type
         user_data_with_type = UserSchemaRegister(**user_data.model_dump(), user_type=1)
-        response = await UserSchemaRegister.create_user(db=db, user_data=user_data)
+        response = await UserSchemaRegister.create_user(db=db, user_data=user_data_with_type)
     
         print(f"Usuário registrado: {response}")
         mission_type_id_consultar = await MissionTypeSchemaBase.get_id_by_name(db, "Confirmar conta de usuário")
