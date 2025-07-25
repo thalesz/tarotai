@@ -23,8 +23,48 @@ router = APIRouter()
                 "application/json": {
                     "example": {
                         "data": [
-                            {"id": 1, "name": "Estilo 1", "description": "Descrição do Estilo 1"},
-                            {"id": 2, "name": "Estilo 2", "description": "Descrição do Estilo 2"}
+                            {
+                                "id": 1,
+                                "name": "Direto",
+                                "description": "Leitura direta e objetiva, sem complicações.",
+                                "available": True
+                            },
+                            {
+                                "id": 2,
+                                "name": "Intuitivo",
+                                "description": "Leitura baseada na intuição e sentimentos do leitor.",
+                                "available": False
+                            },
+                            {
+                                "id": 3,
+                                "name": "Analítico",
+                                "description": "Leitura detalhada e minuciosa, com foco em cada aspecto.",
+                                "available": False
+                            },
+                            {
+                                "id": 4,
+                                "name": "Mistico",
+                                "description": "Leitura com uma abordagem mística e espiritual.",
+                                "available": True
+                            },
+                            {
+                                "id": 5,
+                                "name": "Poético",
+                                "description": "Leitura que utiliza a linguagem poética e simbólica.",
+                                "available": True
+                            },
+                            {
+                                "id": 6,
+                                "name": "Psicológico",
+                                "description": "Leitura focada em aspectos psicológicos e autoconhecimento.",
+                                "available": False
+                            },
+                            {
+                                "id": 7,
+                                "name": "Pragmático",
+                                "description": "Leitura prática, voltada para soluções e ações concretas.",
+                                "available": False
+                            }
                         ]
                     }
                 }
@@ -56,7 +96,6 @@ router = APIRouter()
         },
     },
 )
-
 async def get_all_reading_styles(
     request: Request,
     db: AsyncSession = Depends(get_session)
@@ -75,32 +114,27 @@ async def get_all_reading_styles(
             raise HTTPException(status_code=400, detail="User id not found in token")
         # verifica se o user existe
         userexists = await UserSchemaBase.user_exists(db, user_id)
-        #print("userexists: ", userexists)
         if not userexists:
             raise HTTPException(
                 status_code=400, 
                 detail="User does not exist."
             )
         
-        
-        #ok, tem o id agora vc precisa pegar os tipos de tiragem
-        # e a quantidade de tiragens disponiveis
-        
         # pega o cliente do usuario
         id_user_type = await UserSchemaBase.get_user_type_by_id(db, user_id)
 
-        reading_styles = await UserTypeSchemaBase.get_reading_styles_by_user_type_id(db, id_user_type)
+        reading_styles_avaliable = await UserTypeSchemaBase.get_reading_styles_by_user_type_id(db, id_user_type)
+        all_reading_styles = await ReadingStyleSchemaBase.get_all_reading_styles(db)
         
-        # pegar o nome de a descricao de cada estilo de leitura
-        reading_styles_details = []
-        for style in reading_styles:
-            style_details: ReadingStyleSchemaBase = await ReadingStyleSchemaBase.get_reading_style_by_id(db, style)
-            if style_details:
-                reading_styles_details.append({
-                    "id": style_details.id,
-                    "name": style_details.name,
-                    "description": style_details.description
-                })
-        return {"data": reading_styles_details}
+        reading_styles_response = []
+        for style in all_reading_styles:
+            available = style.id in reading_styles_avaliable
+            reading_styles_response.append({
+                "id": style.id,
+                "name": style.name,
+                "description": style.description,
+                "available": available
+            })
+        return {"data": reading_styles_response}
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)

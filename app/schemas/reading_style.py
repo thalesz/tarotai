@@ -15,6 +15,14 @@ class ReadingStyleSchemaBase(BaseModel):
         validate_assignment = True
         
     @staticmethod
+    async def get_all_reading_styles(session: AsyncSession) -> list:
+        """
+        Retrieve all reading styles from the database.
+        """
+        result = await session.execute(select(ReadingStyleModel))
+        return result.scalars().all()
+        
+    @staticmethod
     async def get_id_by_name(session: AsyncSession, reading_style_name: str) -> int:
         """
         Retrieve the ID of a reading style by its name.

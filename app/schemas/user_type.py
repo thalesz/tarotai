@@ -58,6 +58,9 @@ class UserTypeSchemaBase(BaseModel):
         )
         
         return result.scalars().first() is not None
+    
+    
+    
         
     @staticmethod
     async def get_reading_styles_by_user_type_id(
@@ -142,7 +145,20 @@ class UserTypeSchemaBase(BaseModel):
             select(UserTypeModel.id).where(UserTypeModel.id == user_type_id)
         )
         return result.scalar() is not None
-        
+    
+    @staticmethod
+    async def get_accessible_card_types_by_user_type(
+        session: AsyncSession, user_type_id: int
+    ) -> List[int]:
+        """
+        Retorna os IDs dos tipos de cards acessíveis para o tipo de usuário especificado.
+        """
+        result = await session.execute(
+            select(UserTypeModel.accessible_card_type_ids).where(UserTypeModel.id == user_type_id)
+        )
+        accessible_card_types = result.scalar_one_or_none()
+        return accessible_card_types if accessible_card_types else []
+    
     @staticmethod
     async def sync_user_types(session: AsyncSession):
         if not isinstance(session, AsyncSession):
