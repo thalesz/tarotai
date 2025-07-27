@@ -130,11 +130,13 @@ async def get_all_reading_styles(
         for style in all_reading_styles:
             available = style.id in reading_styles_avaliable
             reading_styles_response.append({
-                "id": style.id,
-                "name": style.name,
-                "description": style.description,
-                "available": available
+            "id": style.id,
+            "name": style.name,
+            "description": style.description,
+            "available": available
             })
+        # Ordena: disponíveis primeiro
+        reading_styles_response.sort(key=lambda x: not x["available"])
         return {"data": reading_styles_response}
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)

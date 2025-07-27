@@ -19,7 +19,7 @@ from app.schemas.user import UserSchemaBase
 from app.schemas.event import EventSchemaBase
 from app.schemas.reading_style import ReadingStyleSchemaBase
 from app.schemas.planet import PlanetSchemaBase
-
+from app.schemas.card_styles import CardStylesSchema
 from app.schemas.zodiac import ZodiacSchemaBase
 
 from app.schemas.daily_path import DailyPathSchemaBase
@@ -32,6 +32,7 @@ from app.services.subscription import Subscription
 from app.services.calendar import Calendar
 from app.services.zodiac import DailyZodiacService
 from app.services.daily_path import DailyPathService
+
 
 from contextlib import asynccontextmanager
 from app.services.scheduler import start_jobs
@@ -56,6 +57,7 @@ async def lifespan(app: FastAPI):
         await ReadingStyleSchemaBase.sync_reading_styles(db)
         await PlanetSchemaBase.sync_planets(db)
         await ZodiacSchemaBase.sync_zodiacs(db)
+        await CardStylesSchema.sync_card_styles(db)
 
 
 

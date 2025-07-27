@@ -18,7 +18,20 @@ class UserTypeSchemaBase(BaseModel):
         orm_mode = True
         arbitrary_types_allowed = True
         validate_assignment = True
-        
+    
+    @staticmethod
+    async def get_accessible_card_styles_by_user_type(
+        session: AsyncSession, user_type_id: int
+    ) -> List[int]:
+        """
+        Retorna os IDs dos estilos de cartas acessíveis para o tipo de usuário especificado.
+        """
+        result = await session.execute(
+            select(UserTypeModel.card_styles).where(UserTypeModel.id == user_type_id)
+        )
+        accessible_card_styles = result.scalar_one_or_none()
+        return accessible_card_styles if accessible_card_styles else []
+    
     @staticmethod
     async def get_planets_by_user_type_id(
         session: AsyncSession, user_type_id: int
@@ -179,7 +192,8 @@ class UserTypeSchemaBase(BaseModel):
                     daily_gift=user_type.get("daily_gift", []),
                     reading_style=user_type.get("reading_style", []),
                     context_amount=user_type.get("context_amount", 0),
-                    planet=user_type.get("planet", [])
+                    planet=user_type.get("planet", []),
+                    card_styles=user_type.get("card_styles", [])
                 )
                 session.add(new_user_type)
                 try:
@@ -200,8 +214,6 @@ class UserTypeSchemaBase(BaseModel):
         return user_types.all()
     
     
-
-
 class UserTypeSchema(UserTypeSchemaBase):
     id: Optional[int] = Field(
         sa_column=Column(Integer, primary_key=True, autoincrement=True)

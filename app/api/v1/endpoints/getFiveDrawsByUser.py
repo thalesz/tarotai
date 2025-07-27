@@ -11,6 +11,7 @@ from app.schemas.card import CardSchema
 from app.schemas.deck import DeckSchema
 from app.schemas.status import StatusSchema
 from app.schemas.topic import TopicSchema
+from app.schemas.card_styles import CardStylesSchema
 from app.services.token import TokenInfoSchema
 
 from app.services.extract import JsonExtractor
@@ -48,7 +49,20 @@ router = APIRouter()
                                 },
                                 "topics": ["Carreira", "Objetivos"],
                                 "created_at": "2024-05-25T15:30:00",
-                                "used_at": "2024-05-25T16:00:00"
+                                "used_at": "2024-05-25T16:00:00",
+                                "card_style": "traditional",
+                                "is_reversed": [
+                                    False,
+                                    False,
+                                    False,
+                                    False,
+                                    False,
+                                    False,
+                                    False,
+                                    False,
+                                    False,
+                                    False
+                                ]
                             }
                         ]
                     }
@@ -124,6 +138,17 @@ async def get_five_draws(
                 raise HTTPException(status_code=404, detail="Tópicos não encontrados.")
             
             extracted_reading = JsonExtractor.extract_json_from_reading(draw.reading)
+            
+            #pegar o nome do estilo de carta
+            #se tiver vazio ou None, usar o padrão 1
+            if not draw.card_style:
+                draw.card_style = 1
+            card_style_name = await CardStylesSchema.get_card_style_name_by_id(db, draw.card_style)
+            
+            # #se is_reversed tiver None coloca tudo false na mesma quantidade de cartas
+            # if draw.is_reversed is None:
+            #     is_reversed = [False] * len(draw.cards)
+                
 
             draws_list.append({
                 "id": draw.id,
@@ -135,7 +160,9 @@ async def get_five_draws(
                 "reading": extracted_reading,
                 "topics": topics,
                 "created_at": draw.created_at.isoformat(),
-                "used_at": draw.used_at.isoformat() if draw.used_at else None
+                "used_at": draw.used_at.isoformat() if draw.used_at else None,
+                "card_style": card_style_name,
+                "is_reversed": draw.is_reversed if draw.is_reversed is not None else [False] * len(draw.cards)
             })
 
         return JSONResponse(content={"draws": draws_list}, status_code=200)

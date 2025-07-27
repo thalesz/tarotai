@@ -42,7 +42,8 @@ from app.api.v1.endpoints import (
     getReviewByDraw,
     getAllUsers,
     getInfoUser,
-    getFiveRecomendations
+    getFiveRecomendations,
+    getAllCardStyles
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -89,6 +90,10 @@ protected_router = APIRouter(dependencies=[Depends(verify_jwt)])
 protected_router.include_router(testjwt.router, prefix="/test", tags=["test"])
 
 protected_router.include_router(getAllUsers.router, prefix="/user", tags=["user"])
+protected_router.include_router(
+    getAllCardStyles.router, prefix="/card-style", tags=["card-style"]
+)
+
 
 api_router.include_router(protected_router)
 # enviar email de verificação de conta - precisa estar logado e ter o status de "pending_confirmation"

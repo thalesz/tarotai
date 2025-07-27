@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field
-from sqlalchemy import Column, DateTime, Integer
+from sqlalchemy import Column, DateTime, Integer, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from typing import Optional, List
 from datetime import datetime
@@ -20,3 +20,7 @@ class DrawModel(Base, SQLModel, table=True):
     topics: list = Field(default=None, sa_column=Column(ARRAY(Integer), nullable=True))
     created_at: datetime = Field(sa_column=Column(DateTime, nullable=False))
     used_at: Optional[datetime] = Field(sa_column=Column(DateTime, nullable=True))
+    is_reversed: list[bool] = Field(default=None, sa_column=Column(ARRAY(Boolean), nullable=True))
+    card_style: Optional[int] = Field(
+        default=None, sa_column=Column(Integer, ForeignKey("card_style.id", ondelete="SET NULL"), nullable=True)
+    )

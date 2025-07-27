@@ -40,7 +40,8 @@ class DrawSchemaBase(BaseModel):
                 cards, 
                 reading, 
                 deck_id, 
-                spread_type_id
+                spread_type_id,
+                is_reversed
                 FROM draws
                 WHERE id = :draw_id
             """)    
@@ -52,6 +53,7 @@ class DrawSchemaBase(BaseModel):
                 "reading": row.reading,
                 "deck_id": row.deck_id,
                 "spread_type_id": row.spread_type_id,
+                "is_reversed": row.is_reversed
             }
         return None
 
@@ -179,7 +181,7 @@ class DrawSchemaBase(BaseModel):
         offset = (count - 1) * limit
 
         query = text("""
-            SELECT id, deck_id, context, reading, cards, topics, created_at, used_at
+            SELECT id, deck_id, context, reading, cards, topics, created_at, used_at, is_reversed, card_style
             FROM draws
             WHERE user_id = :user_id 
             AND spread_type_id = :spread_type 
@@ -209,8 +211,10 @@ class DrawSchemaBase(BaseModel):
                 reading=row.reading,
                 cards=row.cards,
                 topics=row.topics,
+                is_reversed=row.is_reversed,
+                card_style=row.card_style,
                 created_at=row.created_at,
-                used_at=row.used_at,
+                used_at=row.used_at
             )
             for row in rows
         ]
@@ -218,12 +222,19 @@ class DrawSchemaBase(BaseModel):
 
     @staticmethod
     async def update_draw_after_standard_reading(
-        session, draw_id: int, user_id: int, spread_type_id: int, deck_id: int, cards: list[int], context: str, status_id: int, reading: str, topics: list[int]
+        session, draw_id: int, user_id: int, spread_type_id: int, deck_id: int, cards: list[int], context: str, status_id: int, reading: str, topics: list[int], is_reversed: list[bool], card_style: int 
     ) -> None:
         """
         Update the draw entry in the database after a standard reading.
         """
         try:
+            #manda o o is_reversed para o prompt ou []
+            if is_reversed is None or is_reversed == []:
+                is_reversed = [False] * len(cards)
+            if len(is_reversed) != len(cards):
+                raise ValueError("The length of is_reversed must match the length of cards.")
+            # Define the query to update the draw
+            
             query = text(
                 """
                 UPDATE draws
@@ -233,7 +244,9 @@ class DrawSchemaBase(BaseModel):
                     status_id = :status_id, 
                     reading = :reading,
                     topics = :topics,
-                    used_at = :used_at
+                    used_at = :used_at,
+                    is_reversed = :is_reversed,
+                    card_style = :card_style
                 WHERE id = :draw_id
                 """
             )    
@@ -250,6 +263,8 @@ class DrawSchemaBase(BaseModel):
                     "draw_id": draw_id,
                     "topics": topics,
                     "used_at": datetime.now(),  # Set used_at to the current time
+                    "is_reversed": is_reversed,  # Add this line to provide the parameter
+                    "card_style": card_style,  # Add this line to provide the parameter
                 },
             )
             await session.commit()
@@ -327,7 +342,10 @@ class DrawUpdate(DrawSchemaBase):
     cards: list[int] 
     context: str 
     reading_style: int
-    
+    #opcional, saber se a carta esta normal ou invertida
+    is_reversed: list[bool] | None = None
+    card_style: int | None = None  # Optional field for card style ID
+
 class DrawSchema(DrawSchemaBase):
     id: int
     user_id: int

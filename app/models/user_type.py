@@ -28,7 +28,10 @@ class UserTypeModel(Base, SQLModel, table=True):
     context_amount: int = Field(
         default=None, sa_column=Column(Integer, nullable=True)
     )
-    
+    # estilos de carta
+    card_styles: List[int] = Field(
+        default=None, sa_column=Column(ARRAY(Integer), nullable=True)
+    )
 
     class Config:
         arbitrary_types_allowed = True

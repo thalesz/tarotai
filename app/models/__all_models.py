@@ -17,3 +17,4 @@ from app.models.review import ReviewModel  # Importando o ReviewModel
 from app.models.planet import PlanetModel  # Importando o PlanetModel
 from app.models.zodiac import ZodiacModel  # Importando o ZodiacSignModel
 from app.models.personalSign import PersonalSign # Importando o PersonalSignModel
+from app.models.card_styles import CardStyleModel  # Importando o CardStyleModel

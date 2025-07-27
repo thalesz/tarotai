@@ -12,6 +12,7 @@ from app.schemas.draw import DrawSchemaBase  # Import DrawSchemaBase
 from app.schemas.card import CardSchema  # Import CardSchema
 from app.schemas.deck import DeckSchema  # Import DeckSchema
 from app.schemas.user_type import UserTypeSchema  # Import ClientSchema
+# from app.schemas.user_type import UserTypeSchemaBase  # Import UserTypeSchemaBase
 from app.services.token import TokenInfoSchema # Import TokenInfoSchema
 from app.services.openai import OpenAIService  # Import OpenAIService
 from app.schemas.topic import TopicSchema  # Import TopicSchema
@@ -193,6 +194,16 @@ async def update_draw(
                 status_code=400, 
                 detail="Duplicate cards found."
             )
+            
+        #verifica se as cartas estão em mesma quantidade que o is_reversed
+        
+        #is reversed é opcional, se não for enviado, não verifica
+        if draw_data.is_reversed is not None and len(draw_data.cards) != len(draw_data.is_reversed):
+            raise HTTPException(
+                status_code=400, 
+                detail="The number of cards and the number of is_reversed values must match."
+            )
+
             
         #verifica se as cartas são todas do mesmo deck
         deck_check = await CardSchema.check_cards_belong_to_deck(db,  draw_data.deck_id, draw_data.cards,)
@@ -385,13 +396,16 @@ async def update_draw(
 
                 similar_draws.append({
                     "similaridade": similaridade_float,
-                    "context": previous_draw.get('context'),
+                    "context": context,
                     "deck_name": await DeckSchema.get_deck_name_by_id(db, previous_draw.get('deck_id')),
                     "spread_type_name": await SpreadTypeSchema.get_spread_type_name_by_id(db, previous_draw.get('spread_type_id')),
                     "cards": previous_draw.get('cards'),
                     "reading_summary": resumo_leitura,
                     "rating": rating,
-                    "comment": comment
+                    "comment": comment,
+                    
+                    #se existir is_reversed, adiciona
+                    "is_reversed": previous_draw.get('is_reversed', []),
                 })
 
         # Ordena: primeiro por rating (se existir, maior primeiro), depois por similaridade (maior primeiro)
@@ -409,48 +423,87 @@ async def update_draw(
 
 
         # Monta o prompt ajustado incluindo o contexto anterior, se houver
+        # Monta string com contextos anteriores, se existirem
+        previous_contexts_str = ""
         if preview_context:
+            # print(f"Contextos anteriores encontrados: {preview_context}")
             previous_contexts_str = "\n".join(
                 [
-                    f"- Contexto anterior: '{ctx['context']}', Baralho: '{ctx['deck_name']}', Spread: '{ctx['spread_type_name']}', Cartas: {ctx['cards']}, Resumo: {ctx['reading_summary']}"
-                    + (f", Avaliação do usuário: {ctx['rating']}, Comentário do usuário: '{ctx['comment']}'" if ctx['rating'] is not None else "")
+                    f"- Contexto anterior: '{ctx['context']}', Baralho: '{ctx['deck_name']}', Spread: '{ctx['spread_type_name']}', "
+                    f"Cartas: {await CardSchema.get_cards_names_by_group_ids(db, ctx['cards'])}"
+                    + (
+                        f", Está invertida?: "
+                        + (
+                            str(ctx['is_reversed'])
+                            if ctx.get('is_reversed') and len(ctx['is_reversed']) == len(ctx['cards'])
+                            else str([False] * len(ctx['cards']))
+                        )
+                    )
+                    + f", Resumo: {ctx['reading_summary']}"
+                    + (
+                        f", Avaliação do usuário: {ctx['rating']}, Comentário do usuário: '{ctx['comment']}'"
+                        if ctx['rating'] is not None else ""
+                    )
                     for ctx in preview_context
                 ]
             )
-            prompt_ajustado = (
-                f"As cartas fornecidas estão na ordem especificada.\n\n"
-                f"Considere também os seguintes contextos e leituras anteriores do consulente para enriquecer sua análise e coletar informações relevantes para consulta atual:\n"
-                f"{previous_contexts_str}\n\n"
-                f"Realize uma leitura de tarot utilizando as cartas {cards_names}, considerando o contexto '{draw_data.context}', "
-                f"o nome do consulente '{user_name}', o tipo de tiragem '{spreadname}' e o nome do baralho '{deckname}'.\n\n"
-                f"É **OBRIGATÓRIO** aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível durante toda a interpretação, "
-                f"seguindo rigorosamente a seguinte descrição: '{reading_style_description}'.\n\n"
-                f"A resposta deve ser dividida em três partes: **introdução**, **interpretação individual de cada carta**, e **conclusão**. "
-                f"Seja direto e objetivo para que o consulente saiba exatamente como agir após a leitura.\n\n"
-                f"diga exatamente o que o consulente precisa fazer, sem rodeios. exemplo: se ele pedir um sabor de pizza de um sabor exato cm base nas cartas \n\n"
-                f"O resultado **deve** ser retornado no seguinte formato de dicionário JSON VÁLIDO (com aspas duplas):\n"
-                f"```json\n{{\"introducao\": \"...\", \"carta_1\": \"...\", \"carta_2\": \"...\", ..., \"conclusao\": \"...\"}}\n```\n\n"
-                f"> ⚠️ **É EXTREMAMENTE IMPORTANTE que o formato seja seguido com exatidão, usando aspas duplas em todas as chaves e valores, pois a API depende disso.**\n\n"
-                f"Se a tiragem tiver aspectos negativos, forneça uma análise realista e honesta."
-                f"Todas as cartas fornecidas devem ser interpretadas, sem exceção."
-            )
-        else:
-            prompt_ajustado = (
-                f"As cartas fornecidas estão na ordem especificada.\n\n"
-                f"Realize uma leitura de tarot utilizando as cartas {cards_names}, considerando o contexto '{draw_data.context}', "
-                f"o nome do consulente '{user_name}', o tipo de tiragem '{spreadname}' e o nome do baralho '{deckname}'.\n\n"
-                f"É **OBRIGATÓRIO** aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível durante toda a interpretação, "
-                f"seguindo rigorosamente a seguinte descrição: '{reading_style_description}'.\n\n"
-                f"A resposta deve ser dividida em três partes: **introdução**, **interpretação individual de cada carta**, e **conclusão**. "
-                f"Seja direto e objetivo para que o consulente saiba exatamente como agir após a leitura.\n\n"
-                f"diga exatamente o que o consulente precisa fazer, sem rodeios. exemplo: se ele pedir um sabor de pizza de um sabor exato cm base nas cartas \n\n"
-                f"O resultado **deve** ser retornado no seguinte formato de dicionário JSON VÁLIDO (com aspas duplas):\n"
-                f"```json\n{{\"introducao\": \"...\", \"carta_1\": \"...\", \"carta_2\": \"...\", ..., \"conclusao\": \"...\"}}\n```\n\n"
-                f"> ⚠️ **É EXTREMAMENTE IMPORTANTE que o formato seja seguido com exatidão, usando aspas duplas em todas as chaves e valores, pois a API depende disso.**\n\n"
-                f"Se a tiragem tiver aspectos negativos, forneça uma análise honesta e construtiva. "
-                f"Todas as cartas fornecidas devem ser interpretadas, sem exceção."
-            )
 
+        # Monta string com informações de cartas invertidas, se houver
+        reversed_info = ""
+        if draw_data.is_reversed is not None:
+            reversed_info = "\n".join(
+                [
+                    f"- {card_name}: {'invertida' if is_rev else 'normal'}"
+                    for card_name, is_rev in zip(cards_names, draw_data.is_reversed)
+                ]
+            )
+            reversed_info = f"Situação de cada carta (invertida ou normal):\n{reversed_info}\n\n"
+
+        # Parte comum do prompt
+        explicacao_invertidas = (
+            f"{reversed_info}"
+            f"Para cada carta, utilize a lista 'is_reversed': {draw_data.is_reversed}.\n"
+            f"Cada item da lista 'is_reversed' corresponde exatamente à carta na mesma posição da lista de cartas.\n"
+            f"Se o valor correspondente for True, interprete a carta como invertida (com significado oposto ou alterado); se for False, interprete normalmente.\n"
+            f"Exemplo: se is_reversed = [False, True, False], então a primeira e terceira carta são normais, e a segunda está invertida.\n"
+            f"Cartas invertidas devem receber uma análise diferenciada, destacando como o significado se transforma em relação à posição normal.\n\n"
+        )
+
+        # Prompt base
+        prompt_base = (
+            f"As cartas fornecidas estão na ordem especificada.\n\n"
+            f"{explicacao_invertidas}"
+        )
+
+        # Acrescenta contextos anteriores se houver
+        if previous_contexts_str:
+            prompt_base += (
+                f"Considere também os seguintes contextos e leituras anteriores do consulente para enriquecer sua análise e trazer informações relevantes para a consulta atual:\n"
+                f"{previous_contexts_str}\n\n"
+            )
+            
+        # print(f"Prompt base: {prompt_base}")
+
+        # Parte final do prompt
+        prompt_final = (
+            f"Realize uma leitura de tarot utilizando as cartas {cards_names}, considerando o contexto '{draw_data.context}', "
+            f"o nome do consulente '{user_name}', o tipo de tiragem '{spreadname}' e o nome do baralho '{deckname}'.\n\n"
+            f"É OBRIGATÓRIO aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível durante toda a interpretação, "
+            f"seguindo rigorosamente a seguinte descrição: '{reading_style_description}'.\n\n"
+            f"A resposta deve ser dividida em três partes: introdução, interpretação individual de cada carta (nomeando cada uma), e conclusão.\n"
+            f"Seja direto e objetivo para que o consulente saiba exatamente como agir após a leitura.\n\n"
+            f"Se a pergunta for prática (exemplo: pedir sugestão de pizza), responda de forma clara e assertiva, sem rodeios.\n\n"
+            f"O resultado DEVE ser retornado no seguinte formato de dicionário JSON VÁLIDO (com aspas duplas):\n"
+            f"```json\n{{\"introducao\": \"...\", \"carta_1\": \"...\", \"carta_2\": \"...\", ..., \"conclusao\": \"...\"}}\n```\n\n"
+            f"⚠️ É EXTREMAMENTE IMPORTANTE que o formato seja seguido com exatidão, usando aspas duplas em todas as chaves e valores, pois a API depende disso.\n\n"
+            f"Se a tiragem tiver aspectos negativos, forneça uma análise honesta, construtiva e realista. "
+            f"Todas as cartas fornecidas devem ser interpretadas, sem exceção."
+        )
+
+        # Prompt ajustado completo
+        prompt_ajustado = prompt_base + prompt_final
+
+        # Role fixo
         role = (
             "Você é o melhor tarólogo do mundo, com profundo conhecimento em tarot, simbolismo e interpretações espirituais. "
             "Sua leitura é precisa e sensível, tanto para boas quanto para más notícias. "
@@ -463,6 +516,7 @@ async def update_draw(
             "Certifique-se de que sua interpretação seja clara, valiosa e ofereça ao consulente reflexões e caminhos possíveis."
         )
 
+
         #pegar os tokens
         amount_tokens = await UserTypeSchema.get_token_amount_by_id(db, user_type_id)
         max_tokens = (amount_tokens) * (card_count + 2)
@@ -471,6 +525,25 @@ async def update_draw(
 
         status_id = await StatusSchema.get_id_by_name(db, "completed")
 
+        # Se draw_data.is_reversed for None, envia lista vazia
+        is_reversed = draw_data.is_reversed if draw_data.is_reversed is not None else []
+        
+        #verifica se a pessoa tem o estilo da carta
+        if draw_data.card_style is not None:
+            accessible_card_styles = await UserTypeSchema.get_accessible_card_styles_by_user_type(
+                db, user_type_id
+            )
+            if draw_data.card_style not in accessible_card_styles:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Card style does not exist or is not accessible to the user."
+                )
+        #agora a gente atribui o valor dele para 1 caso venha None 
+        if draw_data.card_style is None:
+            draw_data.card_style = 1  # Default value if not provided
+        
+        
+        
         draw = await DrawSchemaBase.update_draw_after_standard_reading(
             db, 
             draw_id=id_draw, 
@@ -481,7 +554,9 @@ async def update_draw(
             context=draw_data.context,
             status_id=status_id,
             reading=reading,
-            topics=list_id_topics
+            topics=list_id_topics,
+            is_reversed=is_reversed,
+            card_style=draw_data.card_style
         )
 
         reading = JsonExtractor.extract_json_from_reading(reading)
@@ -508,6 +583,6 @@ async def update_draw(
     except HTTPException as e:
         raise e
     except Exception as e:
-        print(f"Erro ao buscar os eventos: {e}")
+        print(f"Erro ao atualizar draw: {e}")
         raise HTTPException(status_code=500, detail="Ocorreu um erro ao buscar os eventos.")
 
