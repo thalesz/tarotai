@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -57,7 +57,7 @@ router = APIRouter()
 )
 async def post_new_draw(
     request: Request,
-    draw_data: DrawCreate,
+    spread_type_id: int = Query(..., description="ID do tipo de tiragem"),
     db: AsyncSession = Depends(get_session)
 ):
     try:
@@ -80,7 +80,7 @@ async def post_new_draw(
                 detail="User does not exist."
             )
         # verifica se o tipo de spread existe
-        spreadexists = await SpreadTypeSchema.spread_type_exists(db, draw_data.spread_type_id)
+        spreadexists = await SpreadTypeSchema.spread_type_exists(db, spread_type_id)
         
         # spread_type_exists(db, draw_data.spread_type_id)
         if not spreadexists:
@@ -90,7 +90,7 @@ async def post_new_draw(
             )
             
         # pega o nome do tipo de spread
-        spread_type_name = await SpreadTypeSchema.get_spread_type_name_by_id(db, draw_data.spread_type_id)
+        spread_type_name = await SpreadTypeSchema.get_spread_type_name_by_id(db, spread_type_id)
         
         context_avaliable = await UserTypeSchema.get_context_amount_by_id(db, user_id)
         
