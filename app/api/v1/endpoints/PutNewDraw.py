@@ -486,12 +486,13 @@ async def update_draw(
 
         # Parte final do prompt
         prompt_final = (
+            
             f"Realize uma leitura de tarot utilizando as cartas {cards_names}, considerando o contexto '{draw_data.context}', "
+            f"Garanta que a interpretação siga ABSOLUTAMENTE a ordem das cartas fornecidas acima, da primeira até a última, tipo assim [10,3,4...] vai ler a partir do 10, depois 3, e depois 4 sem alterar a sequência.\n"
             f"o nome do consulente '{user_name}', o tipo de tiragem '{spreadname}' e o nome do baralho '{deckname}'.\n\n"
             f"É OBRIGATÓRIO aplicar o estilo de leitura '{reading_style_name}' de forma clara e perceptível durante toda a interpretação, "
             f"seguindo rigorosamente a seguinte descrição: '{reading_style_description}'.\n\n"
             f"A resposta deve ser dividida em três partes: introdução, interpretação individual de cada carta (nomeando cada uma), e conclusão.\n"
-            f"Garanta que a interpretação siga ABSOLUTAMENTE a ordem das cartas fornecidas, da primeira até a última, sem alterar a sequência.\n"
             f"Seja direto e objetivo para que o consulente saiba exatamente como agir após a leitura.\n\n"
             f"Se a pergunta for prática (exemplo: pedir sugestão de pizza), responda de forma clara e assertiva, sem rodeios.\n\n"
             f"O resultado DEVE ser retornado no seguinte formato de dicionário JSON VÁLIDO (com aspas duplas):\n"
