@@ -581,7 +581,7 @@ async def update_draw(
             
         
         
-        return {"leitura": reading}
+        return {"leitura": reading, "id": id_draw}
     except HTTPException as e:
         raise e
     except Exception as e:
