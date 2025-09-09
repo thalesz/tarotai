@@ -546,20 +546,7 @@ async def update_draw(
         
         
         
-        draw = await DrawSchemaBase.update_draw_after_standard_reading(
-            db, 
-            draw_id=id_draw, 
-            user_id=user_id, 
-            spread_type_id=draw_data.spread_type_id,
-            deck_id=draw_data.deck_id,
-            cards=draw_data.cards,
-            context=draw_data.context,
-            status_id=status_id,
-            reading=reading,
-            topics=list_id_topics,
-            is_reversed=is_reversed,
-            card_style=draw_data.card_style
-        )
+
 
         reading = JsonExtractor.extract_json_from_reading(reading)
         confirm_service = ConfirmMissionService()
@@ -580,8 +567,41 @@ async def update_draw(
             await confirm_service.confirm_mission(db,  mission_type_id, user_id)
             
         
+        ordered_reading = {}
+        ordered_reading["introducao"] = reading.get("introducao", "")
+
+        cards_names = await CardSchema.get_cards_names_by_group_ids(db, draw_data.cards, keep_order=True)
+        print(f"Cards names reordered: {cards_names}")
         
-        return {"leitura": reading, "id": id_draw}
+        # Reordena as cartas e renomeia as chaves para carta_1, carta_2, ...
+        carta_idx = 1
+        for card_name in cards_names:
+            # Encontrar a chave original (ex: carta_10) cujo valor corresponde ao nome da carta atual
+            for key, value in reading.items():
+                if key.startswith("carta_") and card_name in value:
+                    ordered_reading[f"carta_{carta_idx}"] = value
+                    carta_idx += 1
+                    break
+                            
+        ordered_reading["conclusao"] = reading.get("conclusao", "")
+        
+        draw = await DrawSchemaBase.update_draw_after_standard_reading(
+            db, 
+            draw_id=id_draw, 
+            user_id=user_id, 
+            spread_type_id=draw_data.spread_type_id,
+            deck_id=draw_data.deck_id,
+            cards=draw_data.cards,
+            context=draw_data.context,
+            status_id=status_id,
+            reading=ordered_reading,
+            topics=list_id_topics,
+            is_reversed=is_reversed,
+            card_style=draw_data.card_style
+        )
+        
+        
+        return {"leitura": ordered_reading, "id": id_draw}
     except HTTPException as e:
         raise e
     except Exception as e:

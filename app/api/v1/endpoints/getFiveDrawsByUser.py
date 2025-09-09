@@ -39,8 +39,9 @@ router = APIRouter()
                                 "spread_type": "Cruz Celta",
                                 "deck": "Baralho Rider-Waite",
                                 "cards": ["O Louco", "A Imperatriz", "O Mundo"],
+                                "card_ids": [0, 1, 2],
                                 "context": "Pergunta sobre carreira.",
-                                "status": "Completo",
+                                # "status": "Completo",
                                 "reading": {
                                     "introducao": "Esta é a introdução da leitura de tarot.",
                                     "carta_1": "Interpretação da primeira carta.",
@@ -55,13 +56,6 @@ router = APIRouter()
                                     False,
                                     False,
                                     False,
-                                    False,
-                                    False,
-                                    False,
-                                    False,
-                                    False,
-                                    False,
-                                    False
                                 ]
                             }
                         ]
@@ -155,8 +149,9 @@ async def get_five_draws(
                 "spread_type": spreadname,
                 "deck": deck,
                 "cards": cards,
+                "card_ids": draw.cards,
                 "context": draw.context,
-                "status": "Completo",
+                # "status": "Completo",
                 "reading": extracted_reading,
                 "topics": topics,
                 "created_at": draw.created_at.isoformat(),

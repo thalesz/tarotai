@@ -47,14 +47,24 @@ class CardSchemaBase(BaseModel):
         return len(cards) == len(card_ids)
     
     @staticmethod
-    async def get_cards_names_by_group_ids(session: AsyncSession, group_ids: list[int]) -> list:
+    async def get_cards_names_by_group_ids(
+        session: AsyncSession, 
+        group_ids: list[int], 
+        keep_order: bool = False
+    ) -> list:
         """
-        Retorna todos os  nomes de cards de uma lista de grupos de ids específicos.
+        Retorna todos os nomes de cards de uma lista de grupos de ids específicos.
+        Se keep_order=True, retorna os nomes na ordem dos group_ids fornecidos.
         """
         result = await session.execute(
-            select(CardModel.name).where(CardModel.id.in_(group_ids))
+            select(CardModel.id, CardModel.name).where(CardModel.id.in_(group_ids))
         )
-        return result.scalars().all()
+        cards = result.all()
+        if keep_order:
+            id_to_name = {card_id: name for card_id, name in cards}
+            return [id_to_name.get(card_id) for card_id in group_ids if card_id in id_to_name]
+        else:
+            return [name for _, name in cards]
         
     @staticmethod
     async def get_card_by_deck_id(session: AsyncSession, deck_id: int) -> list:
