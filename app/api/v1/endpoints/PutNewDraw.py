@@ -585,6 +585,14 @@ async def update_draw(
                             
         ordered_reading["conclusao"] = reading.get("conclusao", "")
         
+        # Only extract JSON if ordered_reading is a string
+        if isinstance(ordered_reading, str):
+            ordered_reading = JsonExtractor.extract_json_from_reading(ordered_reading)
+        
+        # Converte o dicionário ordered_reading para uma string JSON antes de enviar ao banco
+        import json
+        ordered_reading_json = json.dumps(ordered_reading)
+
         draw = await DrawSchemaBase.update_draw_after_standard_reading(
             db, 
             draw_id=id_draw, 
@@ -594,7 +602,7 @@ async def update_draw(
             cards=draw_data.cards,
             context=draw_data.context,
             status_id=status_id,
-            reading=ordered_reading,
+            reading=ordered_reading_json,  # Usa a string JSON aqui
             topics=list_id_topics,
             is_reversed=is_reversed,
             card_style=draw_data.card_style
