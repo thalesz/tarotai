@@ -12,6 +12,7 @@ from app.schemas.deck import DeckSchema
 from app.schemas.status import StatusSchema
 from app.schemas.topic import TopicSchema
 from app.schemas.card_styles import CardStylesSchema
+from app.schemas.review import ReviewSchema
 from app.services.token import TokenInfoSchema
 
 router = APIRouter()
@@ -20,11 +21,22 @@ router = APIRouter()
     "/{draw_id}",
     summary="Buscar tiragem completa por ID",
     description=(
-        "Retorna todos os detalhes de uma tiragem específica que pertença ao usuário autenticado. "
-        "Inclui informações completas: baralho, cartas, cartas invertidas, contexto, tópicos, "
-        "leitura completa, estilo de carta e todas as outras propriedades da tiragem."
+        "Retorna todos os detalhes de uma tiragem específica que pertença ao usuário autenticado e esteja com status 'completed'. "
+        "Inclui informações completas:\n\n"
+        "- **Identificação**: ID da tiragem, ID do usuário\n"
+        "- **Configuração**: Tipo de spread, baralho utilizado, estilo de cartas\n"
+        "- **Cartas**: Lista completa com ID, nome e posição de cada carta sorteada\n"
+        "- **Cartas invertidas**: Lista de flags booleanos indicando quais cartas estão invertidas\n"
+        "- **Contexto**: Pergunta ou situação original fornecida pelo usuário\n"
+        "- **Leitura**: Interpretação completa gerada pela IA\n"
+        "- **Tópicos**: Tags/categorias relacionadas à tiragem\n"
+        "- **Status**: Estado atual da tiragem (sempre 'completed' neste endpoint)\n"
+        "- **Avaliação**: Review do usuário se existir (rating, comentário e data)\n"
+        "- **Timestamps**: Data de criação e última utilização\n\n"
+        "**Nota**: Apenas tiragens com status 'completed' são retornadas. Tiragens pendentes ou incompletas "
+        "resultarão em erro 404."
     ),
-    response_description="Detalhes completos da tiragem",
+    response_description="Detalhes completos da tiragem com todas as informações disponíveis",
     responses={
         200: {
             "description": "Tiragem encontrada com sucesso.",
@@ -34,17 +46,28 @@ router = APIRouter()
                         "id": 1,
                         "user_id": 123,
                         "spread_type": "Cruz Celta",
+                        "spread_type_id": 1,
                         "deck": "Baralho Rider-Waite",
+                        "deck_id": 1,
                         "cards": [
                             {"id": 1, "name": "O Louco", "position": 0},
-                            {"id": 2, "name": "A Imperatriz", "position": 1}
+                            {"id": 2, "name": "A Imperatriz", "position": 1},
+                            {"id": 3, "name": "O Mundo", "position": 2}
                         ],
-                        "reversed_cards": [1],
-                        "context": "Pergunta detalhada sobre carreira e futuro profissional...",
-                        "reading": "Interpretação completa da tiragem...",
-                        "topics": ["Carreira", "Objetivos"],
+                        "reversed_cards": [False, True, False],
+                        "context": "Pergunta detalhada sobre carreira e futuro profissional. Estou em dúvida sobre...",
+                        "reading": "Interpretação completa da tiragem com análise detalhada de cada carta e suas posições...",
+                        "topics": ["Carreira", "Objetivos", "Futuro"],
                         "card_style": "traditional",
+                        "card_style_id": 1,
                         "status": "completed",
+                        "status_id": 7,
+                        "review": {
+                            "id": 42,
+                            "rating": 5,
+                            "comment": "Leitura muito precisa e esclarecedora!",
+                            "created_at": "2024-05-26T10:15:00"
+                        },
                         "created_at": "2024-05-25T15:30:00",
                         "updated_at": "2024-05-25T15:35:00"
                     }
@@ -54,7 +77,7 @@ router = APIRouter()
         400: {"description": "Dados inválidos ou usuário não encontrado."},
         401: {"description": "Token não fornecido ou inválido."},
         403: {"description": "Tiragem não pertence ao usuário autenticado."},
-        404: {"description": "Tiragem não encontrada."},
+        404: {"description": "Tiragem não encontrada ou não está completa."},
         500: {"description": "Erro interno do servidor."},
     },
 )
@@ -130,6 +153,18 @@ async def get_draw_by_id(
         
         # Busca o nome do status
         status_name = await StatusSchema.get_name_by_id(db, draw.status_id)
+        
+        # Busca a avaliação (review) se existir
+        review_data = None
+        reviews = await ReviewSchema.get_review_by_draw(db, draw.id, user_id)
+        if reviews and len(reviews) > 0:
+            review = reviews[0]
+            review_data = {
+                "id": review.id,
+                "rating": review.rating,
+                "comment": review.comment if review.comment else "",
+                "created_at": review.created_at.isoformat()
+            }
 
         # Monta a resposta completa
         draw_complete = {
@@ -148,6 +183,7 @@ async def get_draw_by_id(
             "card_style_id": card_style_id,
             "status": status_name,
             "status_id": draw.status_id,
+            "review": review_data,
             "created_at": draw.created_at.isoformat(),
             "updated_at": draw.used_at.isoformat() if draw.used_at else None
         }

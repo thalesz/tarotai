@@ -25,10 +25,10 @@ class ReviewSchemaBase(BaseModel):
         """
         if user_id is not None:
             query = select(ReviewModel).where(
-            (ReviewModel.draw_id == draw_id) & (ReviewModel.user == user_id)
+            (ReviewModel.draw == draw_id) & (ReviewModel.user == user_id)
             )
         else:
-            query = select(ReviewModel).where(ReviewModel.draw_id == draw_id)
+            query = select(ReviewModel).where(ReviewModel.draw == draw_id)
 
         result = await session.execute(query)
         reviews = result.scalars().all()
