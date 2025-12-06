@@ -168,26 +168,32 @@ class DrawSchemaBase(BaseModel):
     async def get_total_draws_count(
         session,
         user_id: int,
-        spread_type: int,
+        spread_type: int | None,
         status: int
     ) -> int:
         """
-        Get the total count of draws for a specific user, spread type and status.
+        Get the total count of draws for a specific user and status.
+        Optionally filtered by spread type if provided.
         Used for pagination metadata.
         """
-        query = text("""
+        base_query = """
             SELECT COUNT(*) 
             FROM draws
             WHERE user_id = :user_id 
-            AND spread_type_id = :spread_type 
             AND status_id = :status_id
-        """)
+        """
         
-        result = await session.execute(query, {
+        params = {
             "user_id": user_id,
-            "spread_type": spread_type,
             "status_id": status
-        })
+        }
+        
+        if spread_type is not None:
+            base_query += " AND spread_type_id = :spread_type"
+            params["spread_type"] = spread_type
+        
+        query = text(base_query)
+        result = await session.execute(query, params)
         
         return result.scalar() or 0
 
@@ -195,35 +201,44 @@ class DrawSchemaBase(BaseModel):
     async def get_draws_by_user(
         session,
         user_id: int,
-        spread_type: int,
+        spread_type: int | None,
         count: int,
         status: int,
         limit: int = 5,
     ) -> list[DrawModel]:
         """
-        Get draws for a specific user and spread type, paginated by count.
+        Get draws for a specific user, optionally filtered by spread type, paginated by count.
         For count=1, returns the 5 most recent; for count=2, returns the next 5, etc.
+        If spread_type is None, returns draws of all spread types.
         If no draws are found, returns an empty list.
         """
         offset = (count - 1) * limit
 
-        query = text("""
-            SELECT id, deck_id, context, reading, cards, topics, created_at, used_at, is_reversed, card_style
+        base_query = """
+            SELECT id, deck_id, context, reading, cards, topics, created_at, used_at, is_reversed, card_style, spread_type_id
             FROM draws
             WHERE user_id = :user_id 
-            AND spread_type_id = :spread_type 
             AND status_id = :status_id
-            ORDER BY created_at DESC
-            LIMIT :limit OFFSET :offset
-        """)
-
-        result = await session.execute(query, {
+        """
+        
+        params = {
             "user_id": user_id,
-            "spread_type": spread_type,
             "status_id": status,
             "limit": limit,
             "offset": offset
-        })
+        }
+        
+        if spread_type is not None:
+            base_query += " AND spread_type_id = :spread_type"
+            params["spread_type"] = spread_type
+        
+        base_query += """
+            ORDER BY created_at DESC
+            LIMIT :limit OFFSET :offset
+        """
+
+        query = text(base_query)
+        result = await session.execute(query, params)
 
         rows = result.fetchall()
 
@@ -241,7 +256,8 @@ class DrawSchemaBase(BaseModel):
                 is_reversed=row.is_reversed,
                 card_style=row.card_style,
                 created_at=row.created_at,
-                used_at=row.used_at
+                used_at=row.used_at,
+                spread_type_id=row.spread_type_id
             )
             for row in rows
         ]

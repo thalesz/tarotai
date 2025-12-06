@@ -19,11 +19,11 @@ from app.services.extract import JsonExtractor
 router = APIRouter()
 
 @router.get(
-    "/five/{spread_type}/{count}",
-    summary="Buscar últimas 5 tiragens por tipo de spread (resumido)",
+    "/five/{count}",
+    summary="Buscar últimas 5 tiragens (resumido)",
     description=(
-        "Retorna até 5 tiragens recentes associadas a um tipo de spread (método de leitura), "
-        "que pertençam ao usuário autenticado e que estejam com status 'completo'. "
+        "Retorna até 5 tiragens recentes que pertençam ao usuário autenticado e que estejam com status 'completo'. "
+        "Pode ser filtrado opcionalmente por tipo de spread através do parâmetro de query 'spread_type'. "
         "Retorna dados resumidos para listagem: baralho, cartas, contexto resumido e tópicos. "
         "Para detalhes completos (leitura, cartas invertidas, etc), use o endpoint específico da tiragem."
     ),
@@ -66,12 +66,13 @@ router = APIRouter()
 )
 async def get_five_draws(
     request: Request,
-    spread_type: int,
     count: int,
+    spread_type: int | None = None,
     db: AsyncSession = Depends(get_session)
 ):
     """
-    Recupera até 5 tiragens resumidas de um usuário autenticado, baseado no tipo de spread.
+    Recupera até 5 tiragens resumidas de um usuário autenticado, opcionalmente filtrado por tipo de spread.
+    Se spread_type não for fornecido, retorna tiragens de todos os tipos.
     Retorna apenas informações essenciais para listagem.
     """
 
@@ -88,11 +89,9 @@ async def get_five_draws(
         if not await UserSchemaBase.user_exists(db, user_id):
             raise HTTPException(status_code=400, detail="Usuário não encontrado.")
 
-        # Verifica se o tipo de spread existe
-        if not await SpreadTypeSchema.spread_type_exists(db, spread_type):
+        # Verifica se o tipo de spread existe (apenas se foi fornecido)
+        if spread_type is not None and not await SpreadTypeSchema.spread_type_exists(db, spread_type):
             raise HTTPException(status_code=400, detail="Tipo de spread inexistente.")
-
-        spreadname = await SpreadTypeSchema.get_spread_type_name_by_id(db, spread_type)
 
         # ID do status 'completed'
         id_completed = await StatusSchema.get_id_by_name(db, "completed")
@@ -121,6 +120,9 @@ async def get_five_draws(
 
         draws_list = []
         for draw in draws:
+            # Busca o nome do tipo de spread para esta tiragem
+            spreadname = await SpreadTypeSchema.get_spread_type_name_by_id(db, draw.spread_type_id)
+            
             # Busca o nome do baralho
             deck = await DeckSchema.get_deck_name_by_id(db, draw.deck_id)
             if not deck:
