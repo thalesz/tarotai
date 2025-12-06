@@ -119,7 +119,7 @@ class CardSchema(CardSchemaBase):
     )
     name: str = Field(
         sa_column=Column(String(100), nullable=False)
-    )  # Nome do card
+    )  # Nome do card1
     description: Optional[str] = Field(
         sa_column=Column(Text, nullable=True)
     )  # Descrição do card

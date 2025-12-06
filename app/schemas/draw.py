@@ -15,6 +15,31 @@ class DrawSchemaBase(BaseModel):
         
         
     @staticmethod
+    async def get_draw_by_id(
+        session, draw_id: int
+    ) -> DrawModel | None:
+        """
+        Get a draw by its ID.
+        """
+        query = text(
+            "SELECT * FROM draws WHERE id = :draw_id"
+        )
+        result = await session.execute(query, {"draw_id": draw_id})
+        row = result.fetchone()
+        if row:
+            row_dict = dict(row._mapping)
+            # Garante que listas None sejam convertidas para listas vazias
+            if row_dict.get('cards') is None:
+                row_dict['cards'] = []
+            if row_dict.get('topics') is None:
+                row_dict['topics'] = []
+            if row_dict.get('is_reversed') is None:
+                row_dict['is_reversed'] = []
+            return DrawModel(**row_dict)
+        return None
+    
+    
+    @staticmethod
     async def get_user_contexts(
         session, user_id: int, count: int = 10
     ) -> list[str]:

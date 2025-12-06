@@ -43,7 +43,8 @@ from app.api.v1.endpoints import (
     getAllUsers,
     getInfoUser,
     getFiveRecomendations,
-    getAllCardStyles
+    getAllCardStyles,
+    getDrawById
 )
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -197,6 +198,10 @@ active_router.include_router(
 
 active_router.include_router(
     getFiveRecomendations.router, prefix="/questions", tags=["questions"]
+)
+
+active_router.include_router(
+    getDrawById.router, prefix="/draw", tags=["draw"]
 )
 
 api_router.include_router(active_router)
