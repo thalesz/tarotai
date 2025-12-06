@@ -20,13 +20,14 @@ router = APIRouter()
 
 @router.get(
     "/five/{spread_type}/{count}",
-    summary="Buscar últimas 5 tiragens por tipo de spread",
+    summary="Buscar últimas 5 tiragens por tipo de spread (resumido)",
     description=(
         "Retorna até 5 tiragens recentes associadas a um tipo de spread (método de leitura), "
         "que pertençam ao usuário autenticado e que estejam com status 'completo'. "
-        "Inclui informações como baralho, cartas sorteadas, contexto, tópicos e leitura gerada."
+        "Retorna dados resumidos para listagem: baralho, cartas, contexto resumido e tópicos. "
+        "Para detalhes completos (leitura, cartas invertidas, etc), use o endpoint específico da tiragem."
     ),
-    response_description="Lista de tiragens encontradas",
+    response_description="Lista resumida de tiragens encontradas",
     responses={
         200: {
             "description": "Tiragens encontradas com sucesso.",
@@ -39,26 +40,20 @@ router = APIRouter()
                                 "spread_type": "Cruz Celta",
                                 "deck": "Baralho Rider-Waite",
                                 "cards": ["O Louco", "A Imperatriz", "O Mundo"],
-                                "card_ids": [0, 1, 2],
-                                "context": "Pergunta sobre carreira.",
-                                # "status": "Completo",
-                                "reading": {
-                                    "introducao": "Esta é a introdução da leitura de tarot.",
-                                    "carta_1": "Interpretação da primeira carta.",
-                                    "carta_2": "Interpretação da segunda carta.",
-                                    "conclusao": "Esta é a conclusão da leitura de tarot."
-                                },
+                                "context": "Pergunta sobre carreira...",
                                 "topics": ["Carreira", "Objetivos"],
                                 "created_at": "2024-05-25T15:30:00",
-                                "used_at": "2024-05-25T16:00:00",
-                                "card_style": "traditional",
-                                "is_reversed": [
-                                    False,
-                                    False,
-                                    False,
-                                ]
+                                "card_style": "traditional"
                             }
-                        ]
+                        ],
+                        "pagination": {
+                            "current_page": 1,
+                            "total_pages": 3,
+                            "total_items": 15,
+                            "items_per_page": 5,
+                            "has_next": True,
+                            "has_previous": False
+                        }
                     }
                 }
             }
@@ -76,7 +71,8 @@ async def get_five_draws(
     db: AsyncSession = Depends(get_session)
 ):
     """
-    Recupera até 5 tiragens completas de um usuário autenticado, baseado no tipo de spread.
+    Recupera até 5 tiragens resumidas de um usuário autenticado, baseado no tipo de spread.
+    Retorna apenas informações essenciais para listagem.
     """
 
     try:
@@ -100,6 +96,15 @@ async def get_five_draws(
 
         # ID do status 'completed'
         id_completed = await StatusSchema.get_id_by_name(db, "completed")
+
+        # Busca as tiragens completas
+        # Busca o total de tiragens para metadados de paginação
+        total_draws = await DrawSchemaBase.get_total_draws_count(
+            session=db,
+            user_id=user_id,
+            spread_type=spread_type,
+            status=id_completed
+        )
 
         # Busca as tiragens completas
         draws = await DrawSchemaBase.get_draws_by_user(
@@ -131,36 +136,42 @@ async def get_five_draws(
             if not topics:
                 raise HTTPException(status_code=404, detail="Tópicos não encontrados.")
             
-            extracted_reading = JsonExtractor.extract_json_from_reading(draw.reading)
-            
-            #pegar o nome do estilo de carta
-            #se tiver vazio ou None, usar o padrão 1
+            # Pegar o nome do estilo de carta
+            # Se tiver vazio ou None, usar o padrão 1
             if not draw.card_style:
                 draw.card_style = 1
             card_style_name = await CardStylesSchema.get_card_style_name_by_id(db, draw.card_style)
             
-            # #se is_reversed tiver None coloca tudo false na mesma quantidade de cartas
-            # if draw.is_reversed is None:
-            #     is_reversed = [False] * len(draw.cards)
-                
+            # Resumir contexto (primeiros 100 caracteres)
+            context_summary = draw.context[:100] + "..." if len(draw.context) > 100 else draw.context
 
             draws_list.append({
                 "id": draw.id,
                 "spread_type": spreadname,
                 "deck": deck,
                 "cards": cards,
-                "card_ids": draw.cards,
-                "context": draw.context,
-                # "status": "Completo",
-                "reading": extracted_reading,
+                "context": context_summary,
                 "topics": topics,
                 "created_at": draw.created_at.isoformat(),
-                "used_at": draw.used_at.isoformat() if draw.used_at else None,
-                "card_style": card_style_name,
-                "is_reversed": draw.is_reversed if draw.is_reversed is not None else [False] * len(draw.cards)
+                "card_style": card_style_name
             })
 
-        return JSONResponse(content={"draws": draws_list}, status_code=200)
+        # Calcula metadados de paginação
+        total_pages = (total_draws + 4) // 5  # Arredonda para cima
+        has_next = count < total_pages
+        has_previous = count > 1
+
+        return JSONResponse(content={
+            "draws": draws_list,
+            "pagination": {
+                "current_page": count,
+                "total_pages": total_pages,
+                "total_items": total_draws,
+                "items_per_page": 5,
+                "has_next": has_next,
+                "has_previous": has_previous
+            }
+        }, status_code=200)
 
     except SQLAlchemyError as e:
         await db.rollback()

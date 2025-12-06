@@ -165,6 +165,33 @@ class DrawSchemaBase(BaseModel):
         raise ValueError(f"Draw with ID {draw_id} not found.")
     
     @staticmethod
+    async def get_total_draws_count(
+        session,
+        user_id: int,
+        spread_type: int,
+        status: int
+    ) -> int:
+        """
+        Get the total count of draws for a specific user, spread type and status.
+        Used for pagination metadata.
+        """
+        query = text("""
+            SELECT COUNT(*) 
+            FROM draws
+            WHERE user_id = :user_id 
+            AND spread_type_id = :spread_type 
+            AND status_id = :status_id
+        """)
+        
+        result = await session.execute(query, {
+            "user_id": user_id,
+            "spread_type": spread_type,
+            "status_id": status
+        })
+        
+        return result.scalar() or 0
+
+    @staticmethod
     async def get_draws_by_user(
         session,
         user_id: int,
