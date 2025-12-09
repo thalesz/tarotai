@@ -58,9 +58,7 @@ async def receive_confirmation_token_by_email(
         )
 
     try:
-        user_email = (
-            token_info.get("sub") if isinstance(token_info, dict) else token_info.sub
-        )
+        
         user_id = (
             token_info.get("id") if isinstance(token_info, dict) else token_info.id
         )
@@ -119,10 +117,10 @@ async def receive_confirmation_token_by_email(
                 """,
                 status_code=404,
             )
-
+        user_email = await UserSchemaBase.get_user_email_by_id(db=db, id=user_id)
         await EmailConfirmationSchema.send_active_email(email=user_email)
         
-        message = "Conta confirmada com sucesso! Agora você pode acessar todos os recursos da plataforma."
+        # message = "Conta confirmada com sucesso! Agora você pode acessar todos os recursos da plataforma."
 
         # cria o daily path para o usuário
         daily_path_service = DailyPathService()

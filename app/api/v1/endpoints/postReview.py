@@ -93,13 +93,13 @@ async def put_new_review(
         
         mission_type_id = await MissionTypeSchemaBase.get_id_by_name(
             db=db,
-            name="Avaliar uma tiragem gerada pela IA"
+            name="Avaliar uma tiragem"  # "Avaliar uma tiragem" é o nome da missão
         )
         
         confirm_mission = ConfirmMissionService()
         await confirm_mission.confirm_mission(
             db=db,
-            mission_type_id=mission_type_id,  # "Abrir um biscoito da sorte" é o segundo item,
+            mission_type_id=mission_type_id,  # "Avaliar uma tiragem" é o nome da missão
             user_id=user_id,
         )
 

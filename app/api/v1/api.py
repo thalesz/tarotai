@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from app.api.v1.endpoints import (
     getAllMissionsByEvents,
     test,
+    get_welcome,
     register,
     auth,
     refresh,
@@ -35,6 +36,7 @@ from app.api.v1.endpoints import (
     putBirthInfo,
     getAllPlanet,
     getSignByPlanet,
+    getAllSignsByUser,
     getLastZodiacDaily,
     getLastDailyPath,
     sendPasswordToken,
@@ -56,6 +58,8 @@ api_router = APIRouter()
 
 # rota de teste de conexão de database
 api_router.include_router(test.router, prefix="/test", tags=["test"])
+
+# rota de boas-vindas (mensagens gerais e específicas por categoria)
 
 api_router.include_router(registerOnlyUsers.router, prefix="/register", tags=["register"])
 
@@ -181,6 +185,10 @@ active_router.include_router(
 )
 
 active_router.include_router(
+    getAllSignsByUser.router, prefix="/planet", tags=["planet"]
+)
+
+active_router.include_router(
     getAllPlanet.router, prefix="/planet", tags=["planet"]
 )
 active_router.include_router(
@@ -238,6 +246,9 @@ active_and_pending_router = APIRouter(
         Depends(verify_status_factory(["pending_confirmation", "active"])),
     ]
 )
+
+active_and_pending_router.include_router(get_welcome.router, prefix="/welcome", tags=["welcome"])
+
 
 active_and_pending_router.include_router(
     putStatusNotification.router, prefix="/notification", tags=["notification"]

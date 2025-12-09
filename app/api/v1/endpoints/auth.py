@@ -88,14 +88,14 @@ async def login(user_data: UserSchemaLogin, db: AsyncSession = Depends(get_sessi
 
         access_token = TokenAccessSchema.create_token(
             data={
-                "sub": user.username,
+                # "sub": user.username,
                 "id": user.id,
-                "email": user.email,
-                "user_type": user.user_type,
-                "status": user.status,
-                "full_name": user.full_name,
-                "birth_date": user.birth_date,
-                "birth_time": user.birth_time,
+                # "email": user.email,
+                # "user_type": user.user_type,
+                # "status": user.status,
+                # "full_name": user.full_name,
+                # "birth_date": user.birth_date,
+                # "birth_time": user.birth_time,
             },
             secret_key=settings.ACCESS_SECRET_KEY,
             expires_delta=timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_MINUTES),

@@ -106,7 +106,9 @@ async def get_all_mission_by_event_id(
         if not await UserSchemaBase.user_exists(db, user_id):
             raise HTTPException(status_code=400, detail="User does not exist.")
 
-        user_type = token_info.user_type
+        user_type = await UserSchemaBase.get_user_type_by_id(db, user_id)
+        
+        
         print(f"User ID: {user_id}, User Type: {user_type}")
 
         if not await EventSchemaBase.user_type_has_permission_for_event(db, user_type, event_id):

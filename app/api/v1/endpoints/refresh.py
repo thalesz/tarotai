@@ -123,14 +123,14 @@ async def refresh_access_token(
 
     new_access_token = TokenRefreshSchema.create_token(
         data={
-            "sub": user.username,
+            # "sub": user.username,
             "id": user.id,
-            "email": user.email,
-            "user_type": user.user_type,
-            "status": user.status,
-            "full_name": user.full_name,
-            "birth_date": user.birth_date,
-            "birth_time": user.birth_time,
+            # "email": user.email,
+            # "user_type": user.user_type,
+            # "status": user.status,
+            # "full_name": user.full_name,
+            # "birth_date": user.birth_date,
+            # "birth_time": user.birth_time,
         },
         secret_key=settings.ACCESS_SECRET_KEY,
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),

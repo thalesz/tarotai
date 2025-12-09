@@ -6,6 +6,7 @@ import traceback
 
 
 from app.core.configs import settings
+from app.schemas.user import UserSchemaBase
 from app.services.email import EmailConfirmationSchema
 from app.services.token import TokenInfoSchema, TokenConfirmationSchema
 
@@ -62,8 +63,9 @@ async def send_confirmation_token_by_email(
         )
 
     try:
-        user_email = token_info.email
+        
         user_id = token_info.id
+        user_email = await UserSchemaBase.get_user_email_by_id(db=db, id=user_id)
     except AttributeError:
         raise HTTPException(status_code=400, detail="Email não encontrado no token")
 
@@ -73,7 +75,7 @@ async def send_confirmation_token_by_email(
 
         expires_delta = timedelta(hours=settings.CONFIRMATION_TOKEN_EXPIRE_MINUTES)
         encoded_token = TokenConfirmationSchema.create_token(
-            data={"sub": user_email, "id": user_id},
+            data={"id": user_id},
             secret_key=settings.CONFIRMATION_SECRET_KEY,
             expires_delta=expires_delta,
         )

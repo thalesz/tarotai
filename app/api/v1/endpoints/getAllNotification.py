@@ -8,75 +8,55 @@ from app.schemas.status import StatusSchema
 from app.services.websocket import ws_manager
 from app.services.token import TokenInfoSchema
 from app.schemas.user import UserSchemaBase
+from pydantic import BaseModel, Field
+from typing import List, Optional
 
 router = APIRouter(
 
 )
 
+
+class NotificationItemSchema(BaseModel):
+    id: int = Field(..., example=5)
+    status: str = Field(..., example="Lida")
+    created_at: datetime = Field(..., example="2024-06-13T12:34:56.789000")
+    read_at: Optional[datetime] = Field(None, example="2024-06-13T13:00:00.000000")
+    message: str = Field(..., example="Sua leitura está pronta.")
+
+
+class PaginationSchema(BaseModel):
+    current_page: int = Field(..., example=1)
+    total_pages: int = Field(..., example=3)
+    total_items: int = Field(..., example=13)
+    items_per_page: int = Field(..., example=5)
+    has_next: bool = Field(..., example=True)
+    has_previous: bool = Field(..., example=False)
+
+
+class NotificationsPaginatedResponse(BaseModel):
+    data: List[NotificationItemSchema]
+    pagination: PaginationSchema
+
 @router.get(
-    "/all",
-    summary="Lista todas as notificações do usuário autenticado",
-    description="Retorna todas as notificações pertencentes ao usuário autenticado, incluindo status, data de criação, data de leitura e mensagem.",
+    "/all/{count}",
+    response_model=NotificationsPaginatedResponse,
+    tags=["notifications"],
+    summary="Listar notificações paginadas do usuário (5 por página)",
+    description=(
+        "Retorna as notificações do usuário autenticado paginadas em páginas de 5 itens. "
+        "Cada item inclui status legível, data de criação, data de leitura (se houver) e mensagem."
+    ),
     responses={
-        200: {
-            "description": "Lista de notificações retornada com sucesso.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "data": [
-                            {
-                                "id": 5,
-                                "status": "Lida",
-                                "created_at": "2024-06-13T12:34:56.789000",
-                                "read_at": "2024-06-13T13:00:00.000000",
-                                "message": "Sua leitura está pronta."
-                            },
-                            {
-                                "id": 6,
-                                "status": "Pendente",
-                                "created_at": "2024-06-13T14:00:00.000000",
-                                "read_at": None,
-                                "message": "Você tem uma nova notificação."
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        400: {
-            "description": "Nenhuma notificação encontrada para o usuário ou usuário não encontrado.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "detail": "Nenhuma notificação encontrada para o usuário."
-                    }
-                }
-            }
-        },
-        401: {
-            "description": "Token de autenticação ausente ou inválido.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "detail": "Token de autenticação ausente."
-                    }
-                }
-            }
-        },
-        500: {
-            "description": "Erro interno do servidor.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "detail": "Erro interno: <mensagem de erro>"
-                    }
-                }
-            }
-        }
+        200: {"description": "Lista de notificações retornada com sucesso."},
+        400: {"description": "Usuário não encontrado ou requisição inválida."},
+        401: {"description": "Token de autenticação ausente ou inválido."},
+        404: {"description": "Página de notificações inexistente ou sem notificações."},
+        500: {"description": "Erro interno do servidor."}
     }
 )
 async def get_all_notification_by_user(
     request: Request,
+    count: int,
     db: AsyncSession = Depends(get_session)
 ) -> dict:
     """
@@ -99,23 +79,33 @@ async def get_all_notification_by_user(
         userexists = await UserSchemaBase.user_exists(db, user_id)
         if not userexists:
             raise HTTPException(status_code=400, detail="Usuário não encontrado.")
-        
-        # retorna todas as notificações do usuário
+
+        # Pegar todas as notificações (schema atual expõe uma função que retorna todas)
         notifications = await NotificationSchema.get_all_notifications_by_user_id(db, user_id)
-        if not notifications:
-            raise HTTPException(status_code=400, detail="Nenhuma notificação encontrada para o usuário.")
-        
-        
-        
-        #retorna em formato rest 
+        total_items = len(notifications) if notifications else 0
+
+        if total_items == 0:
+            raise HTTPException(status_code=404, detail="Nenhuma notificação encontrada para o usuário.")
+
+        # Paginação: 5 itens por página
+        items_per_page = 5
+        total_pages = (total_items + items_per_page - 1) // items_per_page
+
+        if count < 1 or count > total_pages:
+            raise HTTPException(status_code=404, detail="Página de notificações inexistente.")
+
+        start = (count - 1) * items_per_page
+        end = start + items_per_page
+        page_notifications = notifications[start:end]
+
         notifications_list = []
-        for notification in notifications:
+        for notification in page_notifications:
             status_name = await StatusSchema.get_name_by_id(db, notification.status)
             if status_name == "pending_confirmation":
                 status_name = "Pendente"
             elif status_name == "completed":
                 status_name = "Lida"
-            
+
             notifications_list.append({
                 "id": notification.id,
                 "status": status_name,
@@ -123,8 +113,17 @@ async def get_all_notification_by_user(
                 "read_at": notification.read_at.isoformat() if notification.read_at else None,
                 "message": notification.message
             })
+
         return {
             "data": notifications_list,
+            "pagination": {
+                "current_page": count,
+                "total_pages": total_pages,
+                "total_items": total_items,
+                "items_per_page": items_per_page,
+                "has_next": count < total_pages,
+                "has_previous": count > 1
+            }
         }
 
 
