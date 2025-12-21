@@ -65,7 +65,7 @@ async def send_confirmation_token_by_email(
     try:
         
         user_id = token_info.id
-        user_email = await UserSchemaBase.get_user_email_by_id(db=db, id=user_id)
+        user_email = await UserSchemaBase.get_user_email_by_id(db=db, user_id=user_id)
     except AttributeError:
         raise HTTPException(status_code=400, detail="Email não encontrado no token")
 
