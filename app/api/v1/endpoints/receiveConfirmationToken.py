@@ -117,7 +117,7 @@ async def receive_confirmation_token_by_email(
                 """,
                 status_code=404,
             )
-        user_email = await UserSchemaBase.get_user_email_by_id(db=db, id=user_id)
+        user_email = await UserSchemaBase.get_user_email_by_id(db=db, user_id=user_id)
         try:
             await EmailConfirmationSchema.send_active_email(email=user_email)
             print(f"Email de ativação enviado para {user_email}")
