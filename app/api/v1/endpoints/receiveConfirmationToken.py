@@ -118,25 +118,42 @@ async def receive_confirmation_token_by_email(
                 status_code=404,
             )
         user_email = await UserSchemaBase.get_user_email_by_id(db=db, id=user_id)
-        await EmailConfirmationSchema.send_active_email(email=user_email)
+        try:
+            await EmailConfirmationSchema.send_active_email(email=user_email)
+            print(f"Email de ativação enviado para {user_email}")
+        except Exception as e:
+            print(f"Erro ao enviar email de ativação para {user_email}: {e}")
         
         # message = "Conta confirmada com sucesso! Agora você pode acessar todos os recursos da plataforma."
 
         # cria o daily path para o usuário
         daily_path_service = DailyPathService()
-        await daily_path_service.create_daily_path_for_user(user_id=user_id, db=db)
-        
+        try:
+            await daily_path_service.create_daily_path_for_user(db=db, user_id=user_id)
+            print(f"Daily path criado para usuário {user_id}")
+        except Exception as e:
+            # Log para depuração, mas não interrompe o fluxo de confirmação
+            print(f"Erro ao criar daily path para usuário {user_id}: {e}")
+
         subscription_service = Subscription()
-        
-        await subscription_service.create_daily_gift_for_user(
-            user_id=user_id, db=db
-        )
-        
-        # cumpre a missão 
-        
+        try:
+            # método estático espera (db, user_id)
+            await subscription_service.create_daily_gift_for_user(db=db, user_id=user_id)
+            print(f"Presentes diários criados para usuário {user_id}")
+        except Exception as e:
+            print(f"Erro ao criar presentes diários para usuário {user_id}: {e}")
+
+        # cumpre a missão
         confirm_service = ConfirmMissionService()
         mission_type_id = await MissionTypeSchemaBase.get_id_by_name(db, "Confirmar conta de usuário")
-        await confirm_service.confirm_mission(db,  mission_type_id, user_id)
+        try:
+            mission_result = await confirm_service.confirm_mission(db, mission_type_id, user_id)
+            if mission_result:
+                print(f"Missão de confirmação cumprida para usuário {user_id}")
+            else:
+                print(f"Missão de confirmação NÃO foi cumprida para usuário {user_id}")
+        except Exception as e:
+            print(f"Erro ao confirmar missão para usuário {user_id}: {e}")
         
         
         # notification = await NotificationSchema.create_notification(db, user_id, message)

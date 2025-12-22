@@ -48,6 +48,7 @@ from app.api.v1.endpoints import (
     getAllCardStyles,
     getDrawById
 )
+from app.api.v1.endpoints import deleteUser
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
 from app.dependencies.verifystatus import verify_status_factory
@@ -237,9 +238,13 @@ adm_active_router.include_router(
 adm_active_router.include_router(
     putPremiumStatus.router, prefix="/subscription", tags=["premium"]
 )
-       
+
+adm_active_router.include_router(deleteUser.router, prefix="/user", tags=["user"])
+
+
 api_router.include_router(adm_active_router)
 
+# endpoint ADM: deletar usuário e dependências
 active_and_pending_router = APIRouter(
     dependencies=[
         Depends(verify_jwt),

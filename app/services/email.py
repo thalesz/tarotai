@@ -68,6 +68,7 @@ class EmailConfirmationSchema(EmailSchemaBase):
     @staticmethod
     async def send_reset_email(email: str, token: str) -> EmailSchemaBase:
         subject = "Tarot - Redefinição de Senha - Ação Necessária"
+        reset_url = f"https://tarotserver-fhe9fngmfxewepf5.westus-01.azurewebsites.net/api/v1/reset-password/receive/{token}"
         body = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -76,12 +77,14 @@ class EmailConfirmationSchema(EmailSchemaBase):
                 <p>Olá,</p>
                 <p>Recebemos uma solicitação para redefinir sua senha. Para continuar, clique no botão abaixo:</p>
                 <div style="text-align: center; margin: 20px 0;">
-                <form action="https://tarotserver-fhe9fngmfxewepf5.westus-01.azurewebsites.net/api/v1/reset-password/receive/{token}" style="display: inline-block;">
+                <form action="{reset_url}" style="display: inline-block;">
                     <button type="submit" style="padding: 10px 20px; font-size: 16px; color: #fff; background-color: #4CAF50; border: none; border-radius: 5px; cursor: pointer;">
                     Redefinir Senha
                     </button>
                 </form>
                 </div>
+                <p>Se o botão não funcionar, acesse o link abaixo:</p>
+                <p style="word-break: break-all;"><a href="{reset_url}">{reset_url}</a></p>
                 <p>Se você não solicitou esta redefinição, por favor, ignore este email.</p>
                 <p>Atenciosamente,<br>Equipe de Suporte</p>
             </div>
@@ -93,6 +96,7 @@ class EmailConfirmationSchema(EmailSchemaBase):
     @staticmethod
     async def send_confirmation_email(email: str, token: str) -> EmailSchemaBase:
         subject = "Tarot - Confirmação de Email - Ação Necessária"
+        confirm_url = f"https://tarotserver-fhe9fngmfxewepf5.westus-01.azurewebsites.net/api/v1/confirm-email/receive/{token}"
         body = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -101,12 +105,14 @@ class EmailConfirmationSchema(EmailSchemaBase):
                 <p>Olá,</p>
                 <p>Obrigado por se registrar em nossa plataforma. Para concluir o processo de cadastro, por favor, confirme seu email clicando no botão abaixo:</p>
                 <div style="text-align: center; margin: 20px 0;">
-                <form action="https://tarotserver-fhe9fngmfxewepf5.westus-01.azurewebsites.net/api/v1/confirm-email/receive/{token}" style="display: inline-block;">
+                <form action="{confirm_url}" style="display: inline-block;">
                     <button type="submit" style="padding: 10px 20px; font-size: 16px; color: #fff; background-color: #4CAF50; border: none; border-radius: 5px; cursor: pointer;">
                     Confirmar Email
                     </button>
                 </form>
                 </div>
+                <p>Se o botão não funcionar, acesse o link abaixo:</p>
+                <p style="word-break: break-all;"><a href="{confirm_url}">{confirm_url}</a></p>
                 <p>Se você não realizou este cadastro, por favor, ignore este email.</p>
                 <p>Atenciosamente,<br>Equipe de Suporte</p>
             </div>
