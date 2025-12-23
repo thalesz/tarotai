@@ -82,6 +82,16 @@ async def get_all_notification_by_user(
 
         # Pegar todas as notificações (schema atual expõe uma função que retorna todas)
         notifications = await NotificationSchema.get_all_notifications_by_user_id(db, user_id)
+
+        # Ordenar da mais recente para a mais antiga (antes de paginar)
+        if notifications:
+            try:
+                notifications.sort(key=lambda n: n.created_at, reverse=True)
+            except Exception:
+                # se os itens não tiverem atributo created_at ou não forem comparáveis,
+                # ignore a ordenação para evitar quebrar a rota
+                pass
+
         total_items = len(notifications) if notifications else 0
 
         if total_items == 0:

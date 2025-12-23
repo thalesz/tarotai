@@ -55,7 +55,11 @@ async def delete_user(
         await db.execute(sqldelete(WalletModel).where(WalletModel.user_id == user_id))
         await db.execute(sqldelete(PersonalSign).where(PersonalSign.user == user_id))
         await db.execute(sqldelete(ReviewModel).where(ReviewModel.user == user_id))
-        await db.execute(sqldelete(Notification).where(Notification.user == user_id))
+        # Alguns mapeamentos com SQLModel funcionam melhor deletando pela tabela
+        try:
+            await db.execute(sqldelete(Notification).where(Notification.user == user_id))
+        except Exception:
+            await db.execute(sqldelete(Notification.__table__).where(Notification.__table__.c.user == user_id))
         await db.execute(sqldelete(MissionModel).where(MissionModel.user == user_id))
         await db.execute(sqldelete(DailyLuckyModel).where(DailyLuckyModel.user_id == user_id))
         await db.execute(sqldelete(DailyZodiacModel).where(DailyZodiacModel.user == user_id))
