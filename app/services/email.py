@@ -137,3 +137,22 @@ class EmailConfirmationSchema(EmailSchemaBase):
         </html>
         """
         return EmailConfirmationSchema._send_email(subject, body, email)
+
+    @staticmethod
+    async def send_contact_email(admin_email: str, name: str, sender_email: str, message: str) -> EmailSchemaBase:
+        subject = f"Mensagem do Landing Page - {name}"
+        body = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                    <h2 style="color: #4CAF50; text-align: center;">Nova Mensagem do Landing Page</h2>
+                    <p><strong>Nome:</strong> {name}</p>
+                    <p><strong>Email:</strong> {sender_email}</p>
+                    <p><strong>Mensagem:</strong></p>
+                    <div style="padding:10px; background:#fff; border-radius:6px; border:1px solid #eee;">{message}</div>
+                    <p style="margin-top:10px;">Atenciosamente,<br>Equipe do sistema</p>
+                </div>
+            </body>
+        </html>
+        """
+        return EmailConfirmationSchema._send_email(subject, body, admin_email)

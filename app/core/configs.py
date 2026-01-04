@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     SMTP_SERVER: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = "thales.lps.araujo@gmail.com"
+    ADMIN_EMAIL: str = "thales.lps.araujo@gmail.com"
 
     class Config:
         env_file = ".env"  # Arquivo de onde as variáveis serão carregadas

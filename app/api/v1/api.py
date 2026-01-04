@@ -46,8 +46,10 @@ from app.api.v1.endpoints import (
     getInfoUser,
     getFiveRecomendations,
     getAllCardStyles,
-    getDrawById
+    getDrawById,
+    putChangePassword
 )
+from app.api.v1.endpoints import postLandingMessage
 from app.api.v1.endpoints import deleteUser
 from app.core.deps import get_session
 from app.dependencies.verifyjwt import verify_jwt
@@ -59,6 +61,9 @@ api_router = APIRouter()
 
 # rota de teste de conexão de database
 api_router.include_router(test.router, prefix="/test", tags=["test"])
+
+# rota pública para mensagens do landing page
+api_router.include_router(postLandingMessage.router, prefix="/contact", tags=["contact"])
 
 # rota de boas-vindas (mensagens gerais e específicas por categoria)
 
@@ -194,6 +199,9 @@ active_router.include_router(
 )
 active_router.include_router(
     putBirthInfo.router, prefix="/user", tags=["user"]
+)
+active_router.include_router(
+    putChangePassword.router, prefix="/user", tags=["user"]
 )
 active_router.include_router(
     getLastZodiacDaily.router, prefix="/daily-zodiac", tags=["daily-zodiac"]

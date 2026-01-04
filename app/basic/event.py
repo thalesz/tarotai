@@ -3,8 +3,8 @@ from datetime import datetime
 event = [
     {
         "id": 1,
-        "name": "Evento diário",
-        "description": "Evento recorrente diariamente, disponível para múltiplos tipos de usuário, com renovação automática.",
+        "name": "Ritual Diário",
+        "description": "Um ritual que se renova a cada dia. Complete missões diárias e mantenha sua energia sempre em fluxo.",
         "missions": [1,7],
         "status": 2,
         "created_at": "2024-01-01T00:00:00",
@@ -19,8 +19,8 @@ event = [
     },
     {
         "id": 2,
-        "name": "Evento semanal",
-        "description": "Evento com recorrência semanal, disponível para múltiplos tipos de usuário.",
+        "name": "Ciclo da Semana",
+        "description": "Um ciclo que se completa toda semana, trazendo novos desafios e recompensas para quem mantém a constância.",
         "missions": [2,8],
         "status": 2,
         "created_at": "2024-02-01T00:00:00",
@@ -35,8 +35,8 @@ event = [
     },
     {
         "id": 3,
-        "name": "Evento mensal",
-        "description": "Evento com recorrência mensal, oferece múltiplos presentes e renovação automática.",
+        "name": "Lua do Mês",
+        "description": "A cada mês, uma nova fase se inicia. Conclua missões especiais e receba múltiplas recompensas ao longo do ciclo lunar.",
         "missions": [3],
         "status": 2,
         "created_at": "2024-03-01T00:00:00",
@@ -51,8 +51,8 @@ event = [
     },
     {
         "id": 4,
-        "name": "Evento anual",
-        "description": "Evento com recorrência anual, não renovável automaticamente, com vários presentes.",
+        "name": "Grande Convergência",
+        "description": "Um evento raro que acontece apenas uma vez por ano, reunindo desafios únicos e recompensas especiais.",
         "missions": [4],
         "status": 2,
         "created_at": "2024-04-01T00:00:00",
@@ -67,8 +67,8 @@ event = [
     },
     {
         "id": 5,
-        "name": "Evento com data de expiração",
-        "description": "Evento com recorrência baseada em data de expiração, disponível para todos os tipos de usuário.",
+        "name": "Portal do Tempo",
+        "description": "Um portal aberto por tempo limitado. Complete as missões antes que ele se feche e garanta recompensas exclusivas.",
         "missions": [5],
         "status": 2,
         "created_at": "2024-05-01T00:00:00",
@@ -83,8 +83,8 @@ event = [
     },
     {
         "id": 6,
-        "name": "Baseado no usuario",
-        "description": "Evento com recorrência baseada no usuário, exclusivo para o tipo de usuário 187.",
+        "name": "Jornada Interior",
+        "description": "Uma jornada personalizada, moldada pelo próprio usuário. Desafios e recompensas evoluem conforme sua trajetória.",
         "missions": [6],
         "status": 2,
         "created_at": "2024-06-01T00:00:00",

@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Depends, Body, HTTPException, Request, Path, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_session
-from app.models.notification import Notification
 from datetime import datetime
 from app.schemas.notification import NotificationSchema
 from app.schemas.status import StatusSchema
-from app.services.websocket import ws_manager
 from app.services.token import TokenInfoSchema
 from app.schemas.user import UserSchemaBase
 from pydantic import BaseModel, Field

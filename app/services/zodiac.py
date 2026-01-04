@@ -17,6 +17,7 @@ from app.schemas.daily_zodiac import DailyZodiacSchemaBase  # Add this import
 from app.services.planet import PlanetSignCalculator  # Add this import
 from app.services.openai import OpenAIService
 from app.services.extract import JsonExtractor
+from app.prompts.daily_zodiac import build_daily_zodiac_prompt, build_daily_zodiac_role
 
 
 class DailyZodiacService:
@@ -95,39 +96,9 @@ class DailyZodiacService:
                 })
 
             # print(f"Signs for user {user_id}: {signs}")  # Debugging line to check the signs
-            prompt = (
-                    f"Crie uma leitura astrológica diária **única e altamente personalizada** para o usuário de ID {user_id}, "
-                    f"com base em sua configuração natal planetária e nas **posições astrológicas atuais** dos planetas. "
-                    f"Dados astrológicos do usuário: {signs}. "
-                    "alem disso em current position temos as posições atuais dos planetas: "
-                    f"{self.current_positions_dict}. "
-
-                    "Utilize princípios de astrologia moderna e tradicional para analisar como os trânsitos atuais influenciam "
-                    "os signos natais do usuário. Faça uma leitura precisa, criativa e com profundidade simbólica, incluindo conselhos práticos e espirituais. "
-                    "A mensagem deve soar como vinda de um astrólogo experiente que compreende a complexidade e a individualidade de cada mapa astral. "
-
-                    "A resposta deve estar **em formato JSON**, com as seguintes chaves obrigatórias:\n"
-                    "- 'diario': visão geral do dia\n"
-                    "- 'amor': insights e conselhos sobre relacionamentos e emoções\n"
-                    "- 'trabalho': tendências e desafios na área profissional\n"
-                    "- 'saude': observações sobre bem-estar físico e mental\n"
-                    "- 'financas': panorama financeiro\n"
-                    "- 'espiritualidade': reflexões internas e conexões com o eu superior\n"
-                    "- 'conselho': mensagem final ou mantra do dia\n\n"
-
-                    "Cada campo deve conter um parágrafo claro, informativo e personalizado. Evite repetições. "
-                    "Inspire-se em fontes confiáveis de astrologia, como Liz Greene, Stephen Arroyo e Dane Rudhyar. "
-                    "Seja criativo e profundo, entregando uma mensagem que pareça feita **exclusivamente** para esse usuário."
-                )
+            prompt = build_daily_zodiac_prompt(user_id=user_id, signs=signs, current_positions=self.current_positions_dict)
             
-            role = (
-                "Você é um astrólogo profissional renomado, com mais de 20 anos de experiência em astrologia moderna, psicológica e esotérica. "
-                "Seu conhecimento abrange tanto a leitura de mapas natais quanto a interpretação de trânsitos e progressões. "
-                "Você tem a habilidade de traduzir complexos padrões astrológicos em orientações práticas e inspiradoras, "
-                "com uma linguagem clara, acolhedora e profunda. Seu objetivo é oferecer ao usuário uma orientação única, "
-                "baseada em seu perfil astrológico individual, com foco em autoconhecimento, crescimento pessoal e tomadas de decisão conscientes. "
-                "Você escreve com empatia, precisão simbólica e autoridade, como um verdadeiro guia espiritual moderno."
-            )
+            role = build_daily_zodiac_role()
 
 
             
