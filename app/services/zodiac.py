@@ -18,12 +18,17 @@ from app.services.planet import PlanetSignCalculator  # Add this import
 from app.services.openai import OpenAIService
 from app.services.extract import JsonExtractor
 from app.prompts.daily_zodiac import build_daily_zodiac_prompt, build_daily_zodiac_role
+import asyncio
 
 
 class DailyZodiacService:
     def __init__(self):
         # Inicializa o dicionário com as posições atuais dos planetas uma única vez
         self.current_positions_dict = None
+        # retry configuration
+        self.max_retries = 3
+        self.retry_delay = 2  # seconds
+        self.backoff = 2  # exponential backoff multiplier
         
     async def _initialize_planet_positions(self, db: AsyncSession):
         if self.current_positions_dict is None:
@@ -101,13 +106,17 @@ class DailyZodiacService:
             
             user_type_id = await UserSchemaBase.get_user_type_by_id(db, user_id)
             max_tokens = int(await UserTypeSchema.get_token_amount_by_id(db, user_type_id))
-            
+
+            # cap the requested tokens to avoid exceeding model limits and high costs
+            # use a conservative multiplier and an absolute cap
+            requested_max_tokens = min(max_tokens * 15, 7000)
+
             openai_service = OpenAIService()
             response = await openai_service.gerar_texto(
                 prompt_ajustado=prompt,
                 role=role,
-                max_tokens=max_tokens*10,
-                temperature=0.9
+                max_tokens=requested_max_tokens,
+                temperature=0.9,
             )
             # print(f"Response from OpenAI: {response}")  # Debugging line to check the response
             
@@ -161,19 +170,40 @@ class DailyZodiacService:
             errors = []
             processed = 0
             for user in active_users:
-                try:
-                    # verificar se ele tem informações de nascimento e criar leitura
-                    await self.create_daily_zodiac_for_user(db=db, user_id=user)
-                    processed += 1
-                except Exception as e:
-                    print(f"Error creating for user {user}: {e}")
-                    errors.append({"user": user, "error": str(e)})
+                # retry loop for creating daily zodiac per user
+                last_exc = None
+                for attempt in range(self.max_retries):
+                    try:
+                        await self.create_daily_zodiac_for_user(db=db, user_id=user)
+                        processed += 1
+                        last_exc = None
+                        break
+                    except Exception as e:
+                        last_exc = e
+                        wait = self.retry_delay * (self.backoff ** attempt)
+                        print(f"Attempt {attempt+1} failed for user {user}: {e}. Retrying in {wait}s...")
+                        if attempt < self.max_retries - 1:
+                            await asyncio.sleep(wait)
+                        else:
+                            print(f"All attempts failed for user {user}: {e}")
+                            errors.append({"user": user, "error": str(e)})
 
-                try:
-                    await DailyZodiacSchemaBase.delete_old_entries(session=db, user_id=user, count=7)
-                except Exception as e:
-                    print(f"Error deleting old entries for user {user}: {e}")
-                    errors.append({"user": user, "error_delete": str(e)})
+                # retry deleting old entries (best-effort)
+                last_del_exc = None
+                for attempt in range(max(1, self.max_retries - 1)):
+                    try:
+                        await DailyZodiacSchemaBase.delete_old_entries(session=db, user_id=user, count=7)
+                        last_del_exc = None
+                        break
+                    except Exception as e:
+                        last_del_exc = e
+                        wait = self.retry_delay * (self.backoff ** attempt)
+                        print(f"Attempt {attempt+1} to delete old entries failed for user {user}: {e}. Retrying in {wait}s...")
+                        if attempt < max(1, self.max_retries - 1) - 1:
+                            await asyncio.sleep(wait)
+                        else:
+                            print(f"Delete attempts failed for user {user}: {e}")
+                            errors.append({"user": user, "error_delete": str(e)})
 
             print(f"Processed {processed} of {len(active_users)} users. Errors: {errors}")
             return {"processed": processed, "total": len(active_users), "errors": errors}

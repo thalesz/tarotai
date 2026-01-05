@@ -16,7 +16,10 @@ def build_daily_zodiac_prompt(user_id: int, signs: list, current_positions: dict
         "com alguém que confia profundamente em sua orientação. "
         "Evite generalizações óbvias ou frases genéricas de horóscopo. "
         "Cada frase deve reforçar a sensação de personalização real.\n\n"
-
+        "O tom deve ser íntimo, acolhedor e inspirador — como um astrólogo experiente falando diretamente "
+        "com alguém que confia profundamente em sua orientação. "
+        "Evite generalizações óbvias ou frases genéricas de horóscopo. "
+        "Cada frase deve reforçar a sensação de personalização real.\n\n"
         "⚠️ **Formato obrigatório da resposta (JSON puro, sem texto extra):**\n"
         "{\n"
         "  'diario': visão geral do dia e da energia predominante,\n"
@@ -36,6 +39,8 @@ def build_daily_zodiac_prompt(user_id: int, signs: list, current_positions: dict
         "mas escreva com voz própria, contemporânea e acessível. "
         "O objetivo final é que o usuário sinta que essa leitura é uma ferramenta diária essencial "
         "para suas decisões e evolução pessoal."
+        "\n\nIMPORTANTE: Seja conciso. Cada campo deve ter no máximo 100 palavras e a resposta JSON completa deve ser o mais sucinta possível. "
+        "Evite floreios extensos — o objetivo é clareza prática."
     )
 
 
