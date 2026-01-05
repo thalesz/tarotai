@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from app.api.v1.endpoints import (
     getAllMissionsByEvents,
+    test_daily_zodiac,
     test,
     get_welcome,
     register,
@@ -61,6 +62,14 @@ api_router = APIRouter()
 
 # rota de teste de conexão de database
 api_router.include_router(test.router, prefix="/test", tags=["test"])
+
+# rota de desenvolvimento para testar criação de horóscopo diário
+api_router.include_router(
+    test_daily_zodiac.router,
+    prefix="/dev",
+    tags=["dev"],
+    dependencies=[Depends(verify_jwt), Depends(verify_user_type_factory("ADM")), Depends(verify_status_factory("active"))],
+)
 
 # rota pública para mensagens do landing page
 api_router.include_router(postLandingMessage.router, prefix="/contact", tags=["contact"])

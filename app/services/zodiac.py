@@ -25,9 +25,6 @@ class DailyZodiacService:
         # Inicializa o dicionário com as posições atuais dos planetas uma única vez
         self.current_positions_dict = None
         
-        
-        
-
     async def _initialize_planet_positions(self, db: AsyncSession):
         if self.current_positions_dict is None:
             planets = await PlanetSchemaBase.get_all_planet_ids_and_names(session=db)
@@ -134,6 +131,7 @@ class DailyZodiacService:
 
         except Exception as e:
             print(f"Error creating daily zodiac for user {user_id}: {e}")
+            raise
 
     # Esta função será chamada uma vez por dia
 
@@ -160,12 +158,24 @@ class DailyZodiacService:
                 return
 
             print(f"Active users: {active_users}")
+            errors = []
+            processed = 0
             for user in active_users:
-                # verificar se ele tem informações de nascimento
-                await self.create_daily_zodiac_for_user(
-                    db=db, user_id=user
-                )
-                await DailyZodiacSchemaBase.delete_old_entries(session=db, user_id=user, count=7)
+                try:
+                    # verificar se ele tem informações de nascimento e criar leitura
+                    await self.create_daily_zodiac_for_user(db=db, user_id=user)
+                    processed += 1
+                except Exception as e:
+                    print(f"Error creating for user {user}: {e}")
+                    errors.append({"user": user, "error": str(e)})
 
-            
+                try:
+                    await DailyZodiacSchemaBase.delete_old_entries(session=db, user_id=user, count=7)
+                except Exception as e:
+                    print(f"Error deleting old entries for user {user}: {e}")
+                    errors.append({"user": user, "error_delete": str(e)})
+
+            print(f"Processed {processed} of {len(active_users)} users. Errors: {errors}")
+            return {"processed": processed, "total": len(active_users), "errors": errors}
+
             # agora por ultimo vamos fazer uma funcão que so mantem os 7 ultimos dias de leitura salvos
