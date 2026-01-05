@@ -16,10 +16,7 @@ def build_daily_zodiac_prompt(user_id: int, signs: list, current_positions: dict
         "com alguém que confia profundamente em sua orientação. "
         "Evite generalizações óbvias ou frases genéricas de horóscopo. "
         "Cada frase deve reforçar a sensação de personalização real.\n\n"
-        "O tom deve ser íntimo, acolhedor e inspirador — como um astrólogo experiente falando diretamente "
-        "com alguém que confia profundamente em sua orientação. "
-        "Evite generalizações óbvias ou frases genéricas de horóscopo. "
-        "Cada frase deve reforçar a sensação de personalização real.\n\n"
+
         "⚠️ **Formato obrigatório da resposta (JSON puro, sem texto extra):**\n"
         "{\n"
         "  'diario': visão geral do dia e da energia predominante,\n"
@@ -27,13 +24,11 @@ def build_daily_zodiac_prompt(user_id: int, signs: list, current_positions: dict
         "  'trabalho': foco, desafios, decisões e oportunidades profissionais,\n"
         "  'saude': bem-estar físico, emocional e mental,\n"
         "  'financas': tendências financeiras e postura recomendada,\n"
-        "  'espiritualidade': insights de autoconhecimento e expansão de consciência,\n"
-        "  'conselho': uma mensagem final marcante, como um mantra ou chamada à ação\n"
+        "  'espiritualidade': insights de autoconhecimento e expansão de consciência\n"
         "}\n\n"
 
         "Cada campo deve conter **um parágrafo único**, fluido e profundo, sem repetições entre seções. "
-        "A leitura deve equilibrar espiritualidade e pragmatismo, deixando o usuário com a sensação de clareza, "
-        "direção e propósito.\n\n"
+        "A leitura deve equilibrar espiritualidade e aplicabilidade prática, deixando o usuário com clareza e direção.\n\n"
 
         "Inspire-se em astrólogos como **Liz Greene, Stephen Arroyo e Dane Rudhyar**, "
         "mas escreva com voz própria, contemporânea e acessível. "
