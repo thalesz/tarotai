@@ -14,6 +14,7 @@ from app.core.security import pwd_context
 
 router = APIRouter()
 
+
 class PasswordResetRequest(BaseModel):
     new_password: str = Field(
         ...,

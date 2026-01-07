@@ -42,6 +42,7 @@ from app.api.v1.endpoints import (
     getLastDailyPath,
     sendPasswordToken,
     receivePasswordToken,
+    validateResetToken,
     getReviewByDraw,
     getAllUsers,
     getInfoUser,
@@ -96,6 +97,9 @@ api_router.include_router(logout.router, prefix="/logout", tags=["logout"])
 api_router.include_router(sendPasswordToken.router, prefix="/password", tags=["password"])
 api_router.include_router(
     receivePasswordToken.router, prefix="/password", tags=["password"]
+)
+api_router.include_router(
+    validateResetToken.router, prefix="/password", tags=["password"]
 )
 # não precisa estar logado por motivos de vai acessar o link com o token de confirmação
 # e o token de confirmação vai ser enviado para o email do usuário
