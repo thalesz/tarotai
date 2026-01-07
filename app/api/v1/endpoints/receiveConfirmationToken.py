@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_session
@@ -8,6 +8,7 @@ from app.schemas.user import UserSchemaBase
 from app.schemas.wallet import WalletSchemaBase
 from app.schemas.status import StatusSchema  # Import StatusSchema
 from app.schemas.notification import NotificationSchema  # Import NotificationSchema
+from app.schemas.confirmation import ConfirmationResponse, ErrorResponse
 from app.core.configs import settings
 from app.services.email import EmailConfirmationSchema
 from app.services.token import TokenConfirmationSchema
@@ -29,9 +30,16 @@ router = APIRouter()
 
 @router.get(
     "/receive/{token}",
-    response_class=HTMLResponse,
+    response_class=JSONResponse,
+    response_model=ConfirmationResponse,
     summary="Recebe o token de confirmação por e-mail",
     description="Recebe um token de confirmação enviado anteriormente para o e-mail do usuário.",
+    responses={
+        200: {"description": "Conta confirmada com sucesso."},
+        400: {"model": ErrorResponse, "description": "Requisição inválida ou usuário já confirmado."},
+        404: {"model": ErrorResponse, "description": "Usuário ou recurso não encontrado."},
+        500: {"description": "Erro interno no servidor."},
+    },
 )
 async def receive_confirmation_token_by_email(
     token: str, db: AsyncSession = Depends(get_session)
@@ -44,18 +52,7 @@ async def receive_confirmation_token_by_email(
         )
         print(f"Token decodificado: {token_info}")
     except HTTPException as e:
-        return HTMLResponse(
-            content=f"""
-            <html>
-            <head><title>Confirmação Falhou</title></head>
-            <body style="font-family: sans-serif; text-align: center; padding: 50px;">
-                <h1 style="color: red;">Erro ao confirmar!</h1>
-                <p>{e.detail}</p>
-            </body>
-            </html>
-            """,
-            status_code=e.status_code,
-        )
+        return JSONResponse(content={"message": str(e.detail)}, status_code=e.status_code)
 
     try:
         
@@ -65,36 +62,14 @@ async def receive_confirmation_token_by_email(
         user_exists = await UserSchemaBase.user_exists(db=db, id=user_id)
         # se n existir lance exceção
         if not user_exists:
-            return HTMLResponse(
-                content="""
-                <html>
-                <head><title>Confirmação Falhou</title></head>
-                <body style="font-family: sans-serif; text-align: center; padding: 50px;">
-                    <h1 style="color: red;">Erro!</h1>
-                    <p>Usuário não encontrado.</p>
-                </body>
-                </html>
-                """,
-                status_code=404,
-            )
+            return JSONResponse(content={"message": "Usuário não encontrado."}, status_code=404)
 
         status_atual = await UserSchemaBase.get_status_by_id(id=user_id, db=db)
         pending_confirmation_status = await StatusSchema.get_id_by_name(
             db=db, name="pending_confirmation"
         )
         if status_atual != pending_confirmation_status:
-            return HTMLResponse(
-                content="""
-                <html>
-                <head><title>Confirmação Falhou</title></head>
-                <body style="font-family: sans-serif; text-align: center; padding: 50px;">
-                    <h1 style="color: red;">Erro!</h1>
-                    <p>Usuário já confirmado.</p>
-                </body>
-                </html>
-                """,
-                status_code=404,
-            )
+            return JSONResponse(content={"message": "Usuário já confirmado."}, status_code=400)
         confirmation_status = await UserSchemaBase.confirm_user_using_id(
             id=user_id, db=db
         )
@@ -105,18 +80,7 @@ async def receive_confirmation_token_by_email(
         )
 
         if not confirmation_status or not wallet_confirmation_status:
-            return HTMLResponse(
-                content="""
-                <html>
-                <head><title>Confirmação Falhou</title></head>
-                <body style="font-family: sans-serif; text-align: center; padding: 50px;">
-                    <h1 style="color: red;">Erro!</h1>
-                    <p>Usuário não encontrado ou  sua carteira não pôde ser encontrada.</p>
-                </body>
-                </html>
-                """,
-                status_code=404,
-            )
+            return JSONResponse(content={"message": "Usuário ou carteira não encontrada."}, status_code=404)
         user_email = await UserSchemaBase.get_user_email_by_id(db=db, user_id=user_id)
         try:
             await EmailConfirmationSchema.send_active_email(email=user_email)
@@ -132,12 +96,10 @@ async def receive_confirmation_token_by_email(
             await daily_path_service.create_daily_path_for_user(db=db, user_id=user_id)
             print(f"Daily path criado para usuário {user_id}")
         except Exception as e:
-            # Log para depuração, mas não interrompe o fluxo de confirmação
             print(f"Erro ao criar daily path para usuário {user_id}: {e}")
 
         subscription_service = Subscription()
         try:
-            # método estático espera (db, user_id)
             await subscription_service.create_daily_gift_for_user(db=db, user_id=user_id)
             print(f"Presentes diários criados para usuário {user_id}")
         except Exception as e:
@@ -160,53 +122,6 @@ async def receive_confirmation_token_by_email(
         # # Envia via WebSocket
         # await ws_manager.send_notification(str(user_id), message, notification.id)
 
-        return HTMLResponse(
-            content=f"""
-            <html>
-            <head>
-                <title>Conta Confirmada</title>
-                <style>
-                    body {{
-                        font-family: Arial, sans-serif;
-                        background-color: #f4f4f4;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        height: 100vh;
-                    }}
-                    .container {{
-                        background: white;
-                        padding: 40px;
-                        border-radius: 10px;
-                        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-                        text-align: center;
-                    }}
-                    .container h1 {{
-                        color: #2e7d32;
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>🎉 Conta Confirmada com Sucesso!</h1>
-                    <p>Obrigado por confirmar seu e-mail, <strong>{user_email}</strong>.</p>
-                    <p>Agora você pode acessar todos os recursos da plataforma.</p>
-                </div>
-            </body>
-            </html>
-            """,
-            status_code=200,
-        )
+        return JSONResponse(content={"message": "Conta confirmada com sucesso!", "email": user_email}, status_code=200)
     except AttributeError as e:
-        return HTMLResponse(
-            content=f"""
-            <html>
-            <head><title>Erro</title></head>
-            <body style="font-family: sans-serif; text-align: center; padding: 50px;">
-                <h1 style="color: red;">Erro interno</h1>
-                <p>{str(e)}</p>
-            </body>
-            </html>
-            """,
-            status_code=400,
-        )
+        return JSONResponse(content={"message": "Erro interno", "detail": str(e)}, status_code=400)

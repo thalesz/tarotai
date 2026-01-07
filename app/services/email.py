@@ -68,7 +68,8 @@ class EmailConfirmationSchema(EmailSchemaBase):
     @staticmethod
     async def send_reset_email(email: str, token: str) -> EmailSchemaBase:
         subject = "Tarot - Redefinição de Senha - Ação Necessária"
-        reset_url = f"https://tarotserver-fhe9fngmfxewepf5.westus-01.azurewebsites.net/api/v1/reset-password/receive/{token}"
+        # Use FRONTEND_URL from settings so the front-end handles the reset flow
+        reset_url = f"{settings.FRONTEND_URL.rstrip('/')}/receive/{token}"
         body = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -96,7 +97,8 @@ class EmailConfirmationSchema(EmailSchemaBase):
     @staticmethod
     async def send_confirmation_email(email: str, token: str) -> EmailSchemaBase:
         subject = "Tarot - Confirmação de Email - Ação Necessária"
-        confirm_url = f"https://tarotserver-fhe9fngmfxewepf5.westus-01.azurewebsites.net/api/v1/confirm-email/receive/{token}"
+        # Use FRONTEND_URL from settings so the front-end handles the confirmation flow
+        confirm_url = f"{settings.FRONTEND_URL.rstrip('/')}/confirm-email/{token}"
         body = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
