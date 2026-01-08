@@ -14,12 +14,12 @@ class Settings(BaseSettings):
     RESET_PASSWORD_TOKEN_EXPIRE_MINUTES: int = 15  # Valor padrão caso não esteja no .env
     SMTP_SECRET_KEY: str
     RESET_PASSWORD_SECRET_KEY: str
-    FRONTEND_URL: str
 
     SMTP_SERVER: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = "thales.lps.araujo@gmail.com"
     ADMIN_EMAIL: str = "thales.lps.araujo@gmail.com"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     class Config:
         env_file = ".env"  # Arquivo de onde as variáveis serão carregadas
