@@ -69,7 +69,8 @@ class EmailConfirmationSchema(EmailSchemaBase):
     async def send_reset_email(email: str, token: str) -> EmailSchemaBase:
         subject = "Tarot - Redefinição de Senha - Ação Necessária"
         # Use FRONTEND_URL from settings so the front-end handles the reset flow
-        reset_url = f"{settings.FRONTEND_URL.rstrip('/')}/receive/{token}"
+        reset = settings.FRONTEND_URL
+        reset_url = f"{reset.rstrip('/')}/receive/{token}"
         body = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -98,7 +99,8 @@ class EmailConfirmationSchema(EmailSchemaBase):
     async def send_confirmation_email(email: str, token: str) -> EmailSchemaBase:
         subject = "Tarot - Confirmação de Email - Ação Necessária"
         # Use FRONTEND_URL from settings so the front-end handles the confirmation flow
-        confirm_url = f"{settings.FRONTEND_URL.rstrip('/')}/confirm-email/{token}"
+        confirm = settings.FRONTEND_URL
+        confirm_url = f"{confirm.rstrip('/')}/confirm-email/{token}"
         body = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
