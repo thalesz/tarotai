@@ -1,10 +1,55 @@
+# Python
 venv/
+env/
+ENV/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+
+# Environment
 .env
+.env.*
+
+# Database
 *.db
 *.sqlite3
-.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.ps1
+
+# Tests & Logs
+tests/
 *.log
+
+# Documentation
+README.MD
+*.md
+
+# HTML
+socket.html
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

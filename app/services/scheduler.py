@@ -4,6 +4,7 @@ from app.services.calendar import Calendar
 from app.services.expired import Expired
 from app.services.user_based import UserBased
 from app.services.mission import MissionService
+from app.services.event import EventService
 from app.services.subscription import Subscription
 from app.core.postgresdatabase import Session
 
@@ -17,11 +18,13 @@ def start_jobs():
     expired = Expired()
     user_based = UserBased()
     mission = MissionService()
+    event = EventService()
     
 
     async def executar_em_ordem():
         await subscription.verify_subscription()
         await mission.update_status_missions()
+        await event.update_status_events()
         await calendar.calendar()
         await expired.expired()
         await user_based.user_based()

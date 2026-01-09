@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from app.api.v1.endpoints import (
     getAllMissionsByEvents,
     test_daily_zodiac,
+    test_daily_tips,
     test,
     get_welcome,
     register,
@@ -40,6 +41,7 @@ from app.api.v1.endpoints import (
     getAllSignsByUser,
     getLastZodiacDaily,
     getLastDailyPath,
+    getLastDailyTips,
     sendPasswordToken,
     receivePasswordToken,
     validateResetToken,
@@ -67,6 +69,14 @@ api_router.include_router(test.router, prefix="/test", tags=["test"])
 # rota de desenvolvimento para testar criação de horóscopo diário
 api_router.include_router(
     test_daily_zodiac.router,
+    prefix="/dev",
+    tags=["dev"],
+    dependencies=[Depends(verify_jwt), Depends(verify_user_type_factory("ADM")), Depends(verify_status_factory("active"))],
+)
+
+# rota de desenvolvimento para testar criação de dicas diárias
+api_router.include_router(
+    test_daily_tips.router,
     prefix="/dev",
     tags=["dev"],
     dependencies=[Depends(verify_jwt), Depends(verify_user_type_factory("ADM")), Depends(verify_status_factory("active"))],
@@ -221,6 +231,9 @@ active_router.include_router(
 )
 active_router.include_router(
     getLastDailyPath.router, prefix="/daily-path", tags=["daily-path"]
+)
+active_router.include_router(
+    getLastDailyTips.router, prefix="/daily-tips", tags=["daily-tips"]
 )
 active_router.include_router(
     getReviewByDraw.router, prefix="/review", tags=["review"]

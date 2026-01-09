@@ -32,6 +32,7 @@ from app.services.subscription import Subscription
 from app.services.calendar import Calendar
 from app.services.zodiac import DailyZodiacService
 from app.services.daily_path import DailyPathService
+from app.services.dailyTips import DailyTipsService
 
 
 from contextlib import asynccontextmanager
@@ -82,8 +83,15 @@ async def lifespan(app: FastAPI):
         scheduled_time=datetime.time(hour=1, minute=30),
         functions=[DailyPathService().create_daily_path_for_all_users]
     )
+    
+    provide_daily_tips = DailyScheduler(
+        scheduled_time=datetime.time(hour=2, minute=30),
+        functions=[DailyTipsService().create_daily_tips_for_all_users]
+    )
+    
     asyncio.create_task(provide_daily_path.start())
     asyncio.create_task(provide_daily_gifts.start())
     asyncio.create_task(provide_daily_horoscope.start())
+    asyncio.create_task(provide_daily_tips.start())
 
     yield

@@ -1,3 +1,4 @@
+import asyncio
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy import select  # Import the select function
@@ -5,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession  # Import AsyncSession
 from sqlalchemy.exc import IntegrityError  # Import IntegrityError
 from app.models.mission import MissionModel  # Import MissionModel to fix NameError
 from app.schemas.status import StatusSchemaBase  # Import StatusSchemaBase to fix NameError
+from app.schemas.event import EventSchemaBase
 from datetime import datetime  # Import datetime to fix NameError
 
 class MissionSchemaBase(BaseModel):
@@ -360,8 +362,20 @@ class MissionSchemaBase(BaseModel):
         Cria uma nova missão para o usuário com o tipo especificado e status 'pending_confirmation'.
         """
         try:
-            status = await StatusSchemaBase.get_id_by_name(session, "pending_confirmation")
-            # print(f"Creating mission: user={user_id}, mission_type={mission_type_id}, status={status}")
+            status, status_active_event = await asyncio.gather(
+                StatusSchemaBase.get_id_by_name(session, "pending_confirmation"),
+                StatusSchemaBase.get_id_by_name(session, "active"),
+            )
+
+            is_event_active = await EventSchemaBase.has_active_event_for_mission(
+                session, mission_type_id, status_active_event
+            )
+
+            if not is_event_active:
+                print(
+                    f"Skipping mission creation for mission_type {mission_type_id}: event inactive or expired."
+                )
+                return
 
             new_mission = MissionModel(
                 mission_type=mission_type_id,
@@ -407,6 +421,26 @@ class MissionSchemaBase(BaseModel):
             await session.rollback()
             print(f'Erro inesperado ao buscar status da missão ID {mission_id}: {e}')
             return None
+
+    @staticmethod
+    async def get_ids_by_mission_type_and_status(
+        session: AsyncSession, mission_type_id: int, status_ids: list[int]
+    ) -> list[int]:
+        """Retorna IDs de missões por tipo e lista de status."""
+        try:
+            result = await session.execute(
+                select(MissionModel.id).where(
+                    MissionModel.mission_type == mission_type_id,
+                    MissionModel.status.in_(status_ids),
+                )
+            )
+            return result.scalars().all()
+        except Exception as e:
+            await session.rollback()
+            print(
+                f'Erro ao buscar missões do tipo {mission_type_id} com status {status_ids}: {e}'
+            )
+            return []
 
     @staticmethod
     async def modify_mission_status(

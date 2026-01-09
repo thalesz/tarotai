@@ -131,6 +131,54 @@ class EventSchemaBase(BaseModel):
         except Exception as e:
             print(f"Error fetching missions for event_id {event_id}: {e}")
             return []
+
+    @staticmethod
+    async def has_active_event_for_mission(
+        session: AsyncSession, mission_type_id: int, active_status_id: int
+    ) -> bool:
+        """
+        Returns True when the mission is not tied to any event or when at least one
+        active (and not expired) event contains the mission. Prevents creating new
+        missions for expired events.
+        """
+        try:
+            from sqlalchemy.dialects.postgresql import array
+
+            now = datetime.now()
+
+            result = await session.execute(
+                select(EventModel).where(
+                    EventModel.missions.op("&&")(array([mission_type_id]))
+                )
+            )
+            events = result.scalars().all()
+
+            # Mission is not related to any event
+            if not events:
+                return True
+
+            for ev in events:
+                expiration = ev.expired_date
+                if expiration and ev.reset_time:
+                    expiration = expiration.replace(
+                        hour=ev.reset_time.hour,
+                        minute=ev.reset_time.minute,
+                        second=ev.reset_time.second,
+                        microsecond=ev.reset_time.microsecond,
+                    )
+
+                if expiration and now >= expiration:
+                    continue
+
+                if ev.status == active_status_id:
+                    return True
+
+            return False
+        except Exception as e:
+            print(
+                f"Error checking active event for mission_type_id {mission_type_id}: {e}"
+            )
+            return False
         
     @staticmethod
     async def user_type_has_permission_for_event(
@@ -234,6 +282,29 @@ class EventSchemaBase(BaseModel):
                     print(f'Error adding "{event_data["name"]}". Integrity conflict.')
             else:
                 print(f'Event "{event_data["name"]}" already exists in the database.')
+    
+    @staticmethod
+    async def update_event_status(
+        session: AsyncSession, event_id: int, new_status: int
+    ) -> None:
+        """
+        Update the status of an event by its ID.
+        """
+        try:
+            query = select(EventModel).where(EventModel.id == event_id)
+            result = await session.execute(query)
+            event = result.scalar_one_or_none()
+            
+            if event:
+                event.status = new_status
+                await session.commit()
+                print(f"Event {event_id} status updated to {new_status}.")
+            else:
+                print(f"Event {event_id} not found.")
+        except Exception as e:
+            await session.rollback()
+            print(f"Error updating event {event_id} status: {e}")
+
                 
 class EventSchema(EventSchemaBase):
     id: int
