@@ -299,6 +299,22 @@ class MissionTypeSchemaBase(BaseModel):
                     print(f'Error adding "{mission_type["name"]}". Integrity conflict.')
             else:
                 print(f'Mission type "{mission_type["name"]}" already exists in the database.')
+    
+    @staticmethod
+    async def get_all_mission_types_by_event_id(
+        db: AsyncSession, event_id: int
+    ) -> list[int]:
+        """Retorna todos os IDs de mission_type relacionados a um evento."""
+        try:
+            from app.models.event import EventModel
+            result = await db.execute(
+                select(EventModel.missions).where(EventModel.id == event_id)
+            )
+            missions = result.scalar_one_or_none()
+            return missions if missions else []
+        except Exception as e:
+            print(f"Erro ao buscar mission_types do evento {event_id}: {e}")
+            return []
                 
 class MissionTypeSchema(MissionTypeSchemaBase):
     """

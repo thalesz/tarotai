@@ -1,16 +1,42 @@
 from datetime import datetime, timedelta
 import asyncio
+import logging
 from app.core.postgresdatabase import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.status import StatusSchemaBase
 from app.schemas.recurrence_mode import RecurrenceMode
 from app.schemas.event import EventSchemaBase
+from app.schemas.mission import MissionSchemaBase
+from app.schemas.mission_type import MissionTypeSchemaBase
+
+logger = logging.getLogger(__name__)
 
 class EventService:
     def __init__(self):
         self.id_user_based = RecurrenceMode.USER_BASED.value
         self.id_expired_date = RecurrenceMode.EXPIRED_DATE.value
         self.id_calendar = RecurrenceMode.CALENDAR.value
+    
+    async def _expire_event_missions(
+        self,
+        db: AsyncSession,
+        event_id: int,
+        status_ids: list[int],
+        id_expired: int
+    ) -> None:
+        """Expira as missões de um evento para os status fornecidos."""
+        try:
+            mission_types = await MissionTypeSchemaBase.get_all_mission_types_by_event_id(db, event_id)
+            
+            for mission_type_id in mission_types:
+                await MissionSchemaBase.update_missions_status_by_type_and_status(
+                    db, mission_type_id, status_ids, id_expired
+                )
+            
+            logger.info(f"Event {event_id}: {len(mission_types)} mission types invalidated with statuses {status_ids}")
+        except Exception as e:
+            logger.error(f"Error expiring missions for event {event_id}: {e}")
+            raise
         
     # Function that will "activate" and "deactivate" events
     async def update_status_events(self):
@@ -78,12 +104,21 @@ class EventService:
             
                 # print(f"Current time: {now}, Expiration date: {expiration_date}")
                 if expiration_date and now >= expiration_date:
-                    # Must check if it's auto_renew or not
-                    if auto_renew:
-                        # Does nothing, as the event will be renewed automatically
-                        print(f"Event {event.id} is expired, but will be renewed automatically.")
-                        # await EventSchemaBase.update_event_status(db, event.id, id_pending)
-                    else:
-                        # If not auto_renew, change the event status to expired
-                        print(f"Event {event.id} is expired and will not be renewed automatically.")
-                        await EventSchemaBase.update_event_status(db, event.id, id_expired)
+                    try:
+                        async with db.begin():
+                            if auto_renew:
+                                # Event will be renewed automatically - expire ALL missions from the previous event
+                                logger.info(f"Event {event.id} expired (auto_renew=True). Expiring all previous missions.")
+                                await self._expire_event_missions(
+                                    db, event.id, [id_active, id_pending, id_completed], id_expired
+                                )
+                            else:
+                                # If not auto_renew, change the event status to expired
+                                logger.info(f"Event {event.id} expired (auto_renew=False). Marking as expired.")
+                                await EventSchemaBase.update_event_status(db, event.id, id_expired)
+                                
+                                # Invalidate only completed missions related to this expired event
+                                await self._expire_event_missions(db, event.id, [id_completed], id_expired)
+                    except Exception as e:
+                        logger.error(f"Error processing event {event.id} expiration: {e}")
+                        await db.rollback()

@@ -1,6 +1,6 @@
 import asyncio
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import func, update
 from sqlalchemy import select  # Import the select function
 from sqlalchemy.ext.asyncio import AsyncSession  # Import AsyncSession
 from sqlalchemy.exc import IntegrityError  # Import IntegrityError
@@ -441,6 +441,25 @@ class MissionSchemaBase(BaseModel):
                 f'Erro ao buscar missões do tipo {mission_type_id} com status {status_ids}: {e}'
             )
             return []
+
+    @staticmethod
+    async def update_missions_status_by_type_and_status(
+        session: AsyncSession, mission_type_id: int, status_ids: list[int], new_status: int
+    ) -> None:
+        """Atualiza o status de todas as missões de um tipo que possuem um dos status fornecidos em uma única query."""
+        try:
+            stmt = update(MissionModel).where(
+                MissionModel.mission_type == mission_type_id,
+                MissionModel.status.in_(status_ids)
+            ).values(status=new_status)
+            
+            await session.execute(stmt)
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            print(
+                f'Erro ao atualizar missões do tipo {mission_type_id} com status {status_ids} para {new_status}: {e}'
+            )
 
     @staticmethod
     async def modify_mission_status(

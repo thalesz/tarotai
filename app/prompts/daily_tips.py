@@ -20,7 +20,7 @@ IMPORTANTE: Os títulos são fixos e já estão definidos. Você deve gerar APEN
 1. "Mantenha" + [seu texto - será lido como "Mantenha [seu texto]"]
 2. "É uma boa ideia" + [seu texto - será lido como "É uma boa ideia [seu texto]"]
 3. "Evite" + [seu texto - será lido como "Evite [seu texto]"]
-4. "Fique de olho em" + [seu texto - será lido como "Fique de olho em [seu texto]"]
+4. "Fique de olho" + [seu texto - será lido como "Fique de olho em [seu texto]"]
 5. "Fuja de" + [seu texto - será lido como "Fuja de [seu texto]"]
 6. "Reavalie" + [seu texto - será lido como "Reavalie [seu texto]"]
 

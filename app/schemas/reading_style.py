@@ -87,12 +87,15 @@ class ReadingStyleSchemaBase(BaseModel):
                 session.add(new_reading_style)
                 try:
                     await session.commit()
-                    print(f'Reading style "{style['name']}" added.')
+                    style_name = style['name']
+                    print(f'Reading style "{style_name}" added.')
                 except IntegrityError:
                     await session.rollback()
-                    print(f'Error adding "{style["name"]}". Integrity conflict.')
+                    style_name = style['name']
+                    print(f'Error adding "{style_name}". Integrity conflict.')
             else:
-                print(f'Reading style "{style["name"]}" already exists in the database.')
+                style_name = style['name']
+                print(f'Reading style "{style_name}" already exists in the database.')
 
 
 class ReadingStyleSchema(ReadingStyleSchemaBase):

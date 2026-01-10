@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import List
 
 
 class Settings(BaseSettings):
@@ -20,6 +21,9 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str = "thales.lps.araujo@gmail.com"
     ADMIN_EMAIL: str = "thales.lps.araujo@gmail.com"
     FRONTEND_URL: str = "http://localhost:3000"
+    # Lista de origens permitidas para CORS (separadas por vírgula no .env)
+    # Ex.: CORS_ORIGINS=http://localhost:5173,https://minhaapp.com
+    CORS_ORIGINS: List[str] = []
 
     class Config:
         env_file = ".env"  # Arquivo de onde as variáveis serão carregadas

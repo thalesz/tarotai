@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import asyncio
+import logging
 from app.core.postgresdatabase import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.status import StatusSchemaBase
@@ -8,6 +9,8 @@ from app.schemas.user import UserSchemaBase
 from app.schemas.mission_type import MissionTypeSchemaBase
 from app.schemas.mission import MissionSchemaBase
 from app.schemas.event import EventSchemaBase
+
+logger = logging.getLogger(__name__)
 
 class MissionService:
     def __init__(self):
@@ -23,13 +26,9 @@ class MissionService:
         status_to_set: int,
     ):
         """Marks all missions of a given type and status as expired."""
-        mission_ids = await MissionSchemaBase.get_ids_by_mission_type_and_status(
-            session, mission_type_id, status_filter
+        await MissionSchemaBase.update_missions_status_by_type_and_status(
+            session, mission_type_id, status_filter, status_to_set
         )
-        for mission_id in mission_ids:
-            await MissionSchemaBase.update_mission_status(
-                session, mission_id, status_to_set
-            )
         
     #funcao que vai "ativar" e "desativar" as missoes
     async def update_status_missions(self):
@@ -117,15 +116,19 @@ class MissionService:
             
                 # print(f"Current time: {now}, Expiration date: {expiration_date}")
                 if expiration_date and now >= expiration_date:
-                    # tem que verificar se é auto_renew ou não
-                    if auto_renew:
-                        # não faz nada, pois a missão vai ser renovada automaticamente
-                        print(f"Missão {mission_type_id} está expirada, mas será renovada automaticamente.")
-                        # await MissionTypeSchemaBase.update_mission_type_status(db, mission_type_id, id_pending)
-                    else:
-                        # se não for auto_renew, muda o status da missão para expirado
-                        print(f"Missão {mission_type_id} está expirada e não será renovada automaticamente.")
-                        await MissionTypeSchemaBase.update_mission_type_status(db, mission_type_id, id_expired)
+                    try:
+                        async with db.begin():
+                            # tem que verificar se é auto_renew ou não
+                            if auto_renew:
+                                # não faz nada, pois a missão vai ser renovada automaticamente
+                                logger.info(f"Mission {mission_type_id} expired (auto_renew=True). Will be renewed automatically.")
+                            else:
+                                # se não for auto_renew, muda o status da missão para expirado
+                                logger.info(f"Mission {mission_type_id} expired (auto_renew=False). Marking as expired.")
+                                await MissionTypeSchemaBase.update_mission_type_status(db, mission_type_id, id_expired)
+                    except Exception as e:
+                        logger.error(f"Error processing mission {mission_type_id} expiration: {e}")
+                        await db.rollback()
                     
             
 

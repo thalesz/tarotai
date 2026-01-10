@@ -3,6 +3,7 @@ import logging
 from app.api.v1.api import api_router
 from app.core.configs import settings
 from app.core.lifespan import lifespan
+from app.core.cors import configure_cors
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -16,6 +17,8 @@ app = FastAPI(
     license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
     lifespan=lifespan,
 )
+
+configure_cors(app)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

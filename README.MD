@@ -38,6 +38,22 @@ Certifique-se de ter os seguintes itens instalados em sua máquina:
     http://localhost:8000/
     ```
 
+.\script-build-push.ps1 -EnvFile .\.env -PostgresUrl "postgresql+asyncpg://citus:postgres1!@c-tarot.oxdkcydnlxxclq.postgres.cosmos.azure.com:5432/citus"
+
+### Configuração de CORS
+
+Defina as origens permitidas via variável de ambiente para uso em desenvolvimento e produção.
+
+- Exemplo (PowerShell - múltiplas origens):
+        ```powershell
+        $env:CORS_ORIGINS="http://localhost:5173,https://purple-island-07cb6510f.6.azurestaticapps.net"
+        uvicorn app.main:app --reload
+        ```
+
+- Exemplo (Azure App Service - App Settings):
+    - `CORS_ORIGINS` = `https://purple-island-07cb6510f.6.azurestaticapps.net`
+    - Opcional: `FRONTEND_URL` = `https://purple-island-07cb6510f.6.azurestaticapps.net`
+
 ## Estrutura do Projeto
 
 - `app/`: Contém o código principal da aplicação.
